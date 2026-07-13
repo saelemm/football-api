@@ -104,6 +104,22 @@ class DomainIntegrationTest {
     }
 
     @Test
+    @DisplayName("Doit permettre d'échanger la titularisation puis de transférer l'ancien titulaire")
+    void shouldSwapTitularisationAndTransferFormerStarter() {
+        Player formerStarter = player.removeTitularisation();
+        Player newStarter = nonTitulairePlayer.assignTitularisation();
+
+        assertTrue(formerStarter.canBeTransferred());
+        assertFalse(newStarter.canBeTransferred());
+
+        Player transferredFormerStarter = formerStarter.transferTo(targetTeamId);
+
+        assertEquals(targetTeamId, transferredFormerStarter.identifier().teamId());
+        assertEquals(sourceTeamId, newStarter.identifier().teamId());
+        assertTrue(newStarter.stats().isTitulaire());
+    }
+
+    @Test
     @DisplayName("Doit gérer les contraintes de budget de l'équipe")
     void shouldHandleTeamBudgetConstraints() {
         // Créer un transfert coûteux

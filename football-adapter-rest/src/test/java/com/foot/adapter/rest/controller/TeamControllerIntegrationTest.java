@@ -1,5 +1,6 @@
 package com.foot.adapter.rest.controller;
 
+import Errors.PlayerNotFoundException;
 import Errors.TeamNotFoundException;
 import com.foot.adapter.rest.RestExceptionHandler;
 import entity.*;
@@ -16,15 +17,17 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import usecase.CreateTeamUseCase;
 import usecase.GetTeamDetailsUseCase;
-import usecase.GetTeamTransferHistoryUseCase;
+import usecase.SwapPlayerTitularisationUseCase;
 
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -54,17 +57,17 @@ class TeamControllerIntegrationTest {
         }
 
         @Bean
-        GetTeamTransferHistoryUseCase getTeamTransferHistoryUseCase() {
-            return Mockito.mock(GetTeamTransferHistoryUseCase.class);
+        SwapPlayerTitularisationUseCase swapPlayerTitularisationUseCase() {
+            return Mockito.mock(SwapPlayerTitularisationUseCase.class);
         }
 
         @Bean
         TeamController teamController(
             CreateTeamUseCase createTeamUseCase,
             GetTeamDetailsUseCase getTeamDetailsUseCase,
-            GetTeamTransferHistoryUseCase getTeamTransferHistoryUseCase
+            SwapPlayerTitularisationUseCase swapPlayerTitularisationUseCase
         ) {
-            return new TeamController(createTeamUseCase, getTeamDetailsUseCase, getTeamTransferHistoryUseCase);
+            return new TeamController(createTeamUseCase, getTeamDetailsUseCase, swapPlayerTitularisationUseCase);
         }
     }
 
@@ -76,6 +79,9 @@ class TeamControllerIntegrationTest {
 
     @Autowired
     private GetTeamDetailsUseCase getTeamDetailsUseCase;
+
+    @Autowired
+    private SwapPlayerTitularisationUseCase swapPlayerTitularisationUseCase;
 
     @Test
     void shouldCreateTeam() throws Exception {
@@ -105,12 +111,39 @@ class TeamControllerIntegrationTest {
     }
 
     @Test
+    void shouldSwapTitularisation() throws Exception {
+        doNothing().when(swapPlayerTitularisationUseCase).execute(any(), any(), any());
+
+        mockMvc.perform(patch("/api/teams/1/players/titularisation/swap")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"titulairePlayerId":55,"replacementPlayerId":56}
+                    """))
+            .andExpect(status().isNoContent());
+    }
+
+    @Test
     void shouldMapDomainException() throws Exception {
         when(getTeamDetailsUseCase.execute(new TeamId(999L))).thenThrow(new TeamNotFoundException("not found"));
 
         mockMvc.perform(get("/api/teams/999"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("not found"));
+    }
+
+    @Test
+    void shouldMapPlayerNotFoundForSwapInsideTeam() throws Exception {
+        Mockito.doThrow(new PlayerNotFoundException("Joueur introuvable dans l'équipe 1 : 56"))
+            .when(swapPlayerTitularisationUseCase)
+            .execute(any(), any(), any());
+
+        mockMvc.perform(patch("/api/teams/1/players/titularisation/swap")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"titulairePlayerId":55,"replacementPlayerId":56}
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Joueur introuvable dans l'équipe 1 : 56"));
     }
 
     @Test

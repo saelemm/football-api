@@ -19,5 +19,9 @@ public class ErrorMessages {
     public static final String NOM_TEAM_NON_NULL = "Le nom de l'équipe ne peut pas être null";
     public static final String BUDGET_POSITIF = "Le budget doit être positif";
     public static final String TITULAIRE_NE_PEUT_PAS_ETRE_TRANSFERE = "Ce joueur titulaire ne peut pas être transféré";
+    public static final String LES_DEUX_JOUEURS_DOIVENT_ETRE_DIFFERENTS = "Les deux joueurs doivent être différents";
+    public static final String LES_DEUX_JOUEURS_DOIVENT_APPARTENIR_A_LA_MEME_EQUIPE = "Les deux joueurs doivent appartenir à la même équipe";
+    public static final String LE_JOUEUR_SORTANT_DOIT_ETRE_TITULAIRE = "Le joueur sortant doit être titulaire";
+    public static final String LE_JOUEUR_ENTRANT_DOIT_ETRE_NON_TITULAIRE = "Le joueur entrant doit être non titulaire";
 
 }

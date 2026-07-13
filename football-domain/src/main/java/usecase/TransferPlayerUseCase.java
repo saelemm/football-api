@@ -8,6 +8,7 @@ import Errors.TeamNotFoundException;
 import Errors.TransferNotAllowedException;
 
 import java.math.BigDecimal;
+import entity.Transfer;
 
 /**
  * Use Case pour orchstrer un transfert de joueur entre deux équipes
@@ -36,14 +37,15 @@ public interface TransferPlayerUseCase {
      * @param targetTeamId ID de l'équipe cible
      * @param transferPrice Prix du transfert
      *
+     * @return L'objet Transfer créé avec tous ses détails
      * @throws PlayerNotFoundException si le joueur n'existe pas
      * @throws TeamNotFoundException si une équipe n'existe pas
      * @throws TransferNotAllowedException si le joueur ne peut pas être transféré
      * @throws InsufficientBudgetException si l'équipe cible n'a pas assez de budget
      */
-    void execute(PlayerId playerId,
-                 TeamId sourceTeamId,
-                 TeamId targetTeamId,
-                 BigDecimal transferPrice);
+    Transfer execute(PlayerId playerId,
+                     TeamId sourceTeamId,
+                     TeamId targetTeamId,
+                     BigDecimal transferPrice);
 }
 

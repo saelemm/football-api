@@ -34,7 +34,7 @@ public class TransferPlayerService implements TransferPlayerUseCase {
     }
 
     @Override
-    public void execute(PlayerId playerId, TeamId sourceTeamId, TeamId targetTeamId, BigDecimal transferPrice) {
+    public Transfer execute(PlayerId playerId, TeamId sourceTeamId, TeamId targetTeamId, BigDecimal transferPrice) {
         Player player = playerRepository.findById(playerId)
             .orElseThrow(() -> new PlayerNotFoundException("Joueur introuvable : " + playerId.value()));
 
@@ -63,6 +63,8 @@ public class TransferPlayerService implements TransferPlayerUseCase {
         // Mise à jour équipe cible
         Team updatedTarget = targetTeam.addPlayer(playerId, price, transfer);
         teamRepository.save(updatedTarget);
+
+        return transfer;
     }
 }
 

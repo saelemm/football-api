@@ -1,7 +1,6 @@
 package usecase;
 
 import Errors.TeamNotFoundException;
-import entity.PlayerId;
 import entity.Transfer;
 import entity.TeamId;
 import java.util.List;
@@ -46,15 +45,5 @@ public interface GetTeamTransferHistoryUseCase {
      */
     List<Transfer> findIncoming(TeamId teamId);
 
-    /**
-     * Récupère l'historique des transferts d'une équipe pour un joueur donné.
-     *
-     * @param teamId ID de l'équipe
-     * @param playerId ID du joueur
-     * @return Liste des transferts de ce joueur impliquant l'équipe
-     *
-     * @throws TeamNotFoundException si l'équipe n'existe pas
-     */
-    List<Transfer> findByPlayerId(TeamId teamId, PlayerId playerId);
 }
 

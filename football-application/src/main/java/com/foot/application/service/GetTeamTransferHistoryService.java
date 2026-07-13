@@ -1,7 +1,6 @@
 package com.foot.application.service;
 
 import Errors.TeamNotFoundException;
-import entity.PlayerId;
 import entity.TeamId;
 import entity.Transfer;
 import org.springframework.stereotype.Service;
@@ -40,13 +39,6 @@ public class GetTeamTransferHistoryService implements GetTeamTransferHistoryUseC
         return transferRepository.findIncomingTransfers(teamId);
     }
 
-    @Override
-    public List<Transfer> findByPlayerId(TeamId teamId, PlayerId playerId) {
-        validateTeamExists(teamId);
-        return transferRepository.findByPlayerId(playerId).stream()
-            .filter(t -> teamId.equals(t.sourceTeamId()) || teamId.equals(t.targetTeamId()))
-            .toList();
-    }
 
     private void validateTeamExists(TeamId teamId) {
         teamRepository.findById(teamId)

@@ -48,7 +48,7 @@ public class RecruitPlayerService implements RecruitPlayerUseCase {
 
         Price price = new Price(marketPrice);
 
-        // Création du joueur avec id=0L (généré par JPA)
+        // Création du joueur avec id=0L auto-générer par JPA
         Player player = new Player(
             new PlayerIdentifier(new PlayerId(0L), firstName, lastName, acronym, tId),
             new PlayerStat(position, new Note(performance), price, false),

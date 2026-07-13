@@ -4,6 +4,7 @@ import com.foot.adapter.rest.dto.IdResponse;
 import com.foot.adapter.rest.dto.PlayerResponse;
 import com.foot.adapter.rest.dto.RecruitPlayerRequest;
 import com.foot.adapter.rest.dto.TransferPlayerRequest;
+import com.foot.adapter.rest.dto.TransferResponse;
 import com.foot.adapter.rest.dto.UpdatePerformanceRequest;
 import com.foot.adapter.rest.mapper.RestDtoMapper;
 import entity.PlayerId;
@@ -67,15 +68,17 @@ public class PlayerController {
     }
 
     @PostMapping("/transfer")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void transferPlayer(@RequestBody TransferPlayerRequest request) {
-        transferPlayerUseCase.execute(
+    @ResponseStatus(HttpStatus.CREATED)
+    public TransferResponse transferPlayer(@RequestBody TransferPlayerRequest request) {
+        var transfer = transferPlayerUseCase.execute(
             new PlayerId(request.playerId()),
             request.sourceTeamId() == null ? null : new TeamId(request.sourceTeamId()),
             new TeamId(request.targetTeamId()),
             request.transferPrice()
         );
+        return RestDtoMapper.toResponse(transfer);
     }
+
 
     @PatchMapping("/{playerId}/performance")
     @ResponseStatus(HttpStatus.NO_CONTENT)

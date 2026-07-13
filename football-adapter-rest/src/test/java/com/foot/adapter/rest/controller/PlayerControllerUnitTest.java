@@ -11,6 +11,8 @@ import entity.PlayerVersion;
 import entity.PositionEnum;
 import entity.Price;
 import entity.TeamId;
+import entity.Transfer;
+import entity.TransferId;
 import entity.Note;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,15 +63,29 @@ class PlayerControllerUnitTest {
     void shouldRecruitTransferAndUpdate() {
         when(recruitPlayerUseCase.execute(any(), any(), any(), any(), any(), any(), any())).thenReturn(42L);
 
+        Transfer mockTransfer = new Transfer(
+            new TransferId(1L),
+            new PlayerId(42L),
+            new TeamId(1L),
+            new TeamId(2L),
+            new Price(BigDecimal.ONE),
+            new Date()
+        );
+        when(transferPlayerUseCase.execute(any(), any(), any(), any())).thenReturn(mockTransfer);
+
         assertEquals(42L, controller.recruitPlayer(new RecruitPlayerRequest(
             "A", "B", "AB", "st", 7.5f, BigDecimal.TEN, 1L
         )).id());
 
-        controller.transferPlayer(new TransferPlayerRequest(42L, 1L, 2L, BigDecimal.ONE));
+        var transferResponse = controller.transferPlayer(new TransferPlayerRequest(42L, 1L, 2L, BigDecimal.ONE));
+        assertEquals(1L, transferResponse.transferId());
+        assertEquals(42L, transferResponse.playerId());
+
         controller.updatePerformance(42L, new UpdatePerformanceRequest(9.1f));
 
         verify(transferPlayerUseCase).execute(any(), any(), any(), any());
         verify(updatePlayerPerformanceUseCase).execute(any(), any());
     }
+
 }
 

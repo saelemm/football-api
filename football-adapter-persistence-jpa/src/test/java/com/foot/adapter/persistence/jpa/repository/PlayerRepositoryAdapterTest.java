@@ -87,6 +87,21 @@ class PlayerRepositoryAdapterTest extends AbstractJpaContainerTest {
         assertTrue(adapter.findById(new PlayerId(playerId)).isEmpty());
     }
 
+    @Test
+    @DisplayName("doit mettre à jour le statut de titularisation d'un joueur")
+    void shouldUpdatePlayerTitularisationStatus() {
+        Long teamId = saveTeam("Monaco", "ASM");
+        Long playerId = adapter.save(domainPlayer(0L, teamId, true));
+
+        Player titulairePlayer = adapter.findById(new PlayerId(playerId)).orElseThrow();
+        adapter.save(titulairePlayer.removeTitularisation());
+
+        Player updatedPlayer = adapter.findById(new PlayerId(playerId)).orElseThrow();
+
+        assertFalse(updatedPlayer.stats().isTitulaire());
+        assertEquals(teamId, updatedPlayer.identifier().teamId().value());
+    }
+
     private Long saveTeam(String name, String acronym) {
         TeamJpa team = new TeamJpa();
         team.setName(name);

@@ -2,6 +2,7 @@ package errors;
 
 import Errors.DomainException;
 import Errors.InsufficientBudgetException;
+import Errors.TitularisationNotAllowedException;
 import Errors.TransferNotAllowedException;
 import Errors.PlayerNotFoundException;
 import Errors.TeamNotFoundException;
@@ -30,6 +31,17 @@ class DomainExceptionsTest {
     void shouldCreateTransferNotAllowedException() {
         String message = "Player cannot be transferred";
         TransferNotAllowedException exception = new TransferNotAllowedException(message);
+
+        assertEquals(message, exception.getMessage());
+        assertInstanceOf(DomainException.class, exception);
+        assertInstanceOf(RuntimeException.class, exception);
+    }
+
+    @Test
+    @DisplayName("Doit lever TitularisationNotAllowedException avec un message")
+    void shouldCreateTitularisationNotAllowedException() {
+        String message = "Titularisation swap not allowed";
+        TitularisationNotAllowedException exception = new TitularisationNotAllowedException(message);
 
         assertEquals(message, exception.getMessage());
         assertInstanceOf(DomainException.class, exception);

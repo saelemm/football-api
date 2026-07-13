@@ -30,6 +30,32 @@ public record Player(PlayerIdentifier identifier,
         return new Player(identifier, updatedStats, version);
     }
 
+    public Player removeTitularisation() {
+        return new Player(
+                identifier,
+                new PlayerStat(
+                        stats.position(),
+                        stats.performanceNote(),
+                        stats.marketPrice(),
+                        false
+                ),
+                version
+        );
+    }
+
+    public Player assignTitularisation() {
+        return new Player(
+                identifier,
+                new PlayerStat(
+                        stats.position(),
+                        stats.performanceNote(),
+                        stats.marketPrice(),
+                        true
+                ),
+                version
+        );
+    }
+
     // Retourne un nouveau Player après transfert
     public Player transferTo(TeamId newTeamId) {
         validateTransfer(newTeamId);

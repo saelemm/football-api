@@ -2,9 +2,9 @@
 
 Adapter REST Spring MVC qui expose les use cases du domaine via `/api`.
 
-## Endpoints
+## Endpoints par controller
 
-### Equipes
+### `TeamController`
 
 - `GET /api/teams`
 - `POST /api/teams`
@@ -12,17 +12,20 @@ Adapter REST Spring MVC qui expose les use cases du domaine via `/api`.
 - `GET /api/teams/{teamId}/players`
 - `GET /api/teams/{teamId}/players/starters`
 - `GET /api/teams/{teamId}/players/substitutes`
-- `GET /api/teams/{teamId}/transfers`
-- `GET /api/teams/{teamId}/transfers/incoming`
-- `GET /api/teams/{teamId}/transfers/outgoing`
-- `GET /api/teams/{teamId}/transfers/player/{playerId}`
+- `PATCH /api/teams/{teamId}/players/titularisation/swap`
 
-### Joueurs
+### `PlayerController`
 
 - `GET /api/players/{playerId}`
 - `POST /api/players/recruit`
 - `POST /api/players/transfer`
 - `PATCH /api/players/{playerId}/performance`
+
+### `TransferController`
+
+- `GET /api/teams/{teamId}/transfers`
+- `GET /api/teams/{teamId}/transfers/incoming`
+- `GET /api/teams/{teamId}/transfers/outgoing`
 
 ## Notes
 

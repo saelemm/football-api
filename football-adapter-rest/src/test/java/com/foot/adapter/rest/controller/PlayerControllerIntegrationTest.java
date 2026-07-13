@@ -11,6 +11,8 @@ import entity.PlayerVersion;
 import entity.PositionEnum;
 import entity.Price;
 import entity.TeamId;
+import entity.Transfer;
+import entity.TransferId;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +82,8 @@ class PlayerControllerIntegrationTest {
             TransferPlayerUseCase transferPlayerUseCase,
             UpdatePlayerPerformanceUseCase updatePlayerPerformanceUseCase
         ) {
-            return new PlayerController(getPlayerDetailsUseCase, recruitPlayerUseCase, transferPlayerUseCase,
+            return new PlayerController(getPlayerDetailsUseCase, recruitPlayerUseCase,
+                transferPlayerUseCase,
                 updatePlayerPerformanceUseCase);
         }
     }
@@ -117,7 +120,16 @@ class PlayerControllerIntegrationTest {
     @Test
     void shouldRecruitTransferUpdate() throws Exception {
         when(recruitPlayerUseCase.execute(any(), any(), any(), any(), any(), any(), any())).thenReturn(55L);
-        doNothing().when(transferPlayerUseCase).execute(any(), any(), any(), any());
+
+        Transfer mockTransfer = new Transfer(
+            new TransferId(100L),
+            new PlayerId(55L),
+            new TeamId(1L),
+            new TeamId(2L),
+            new Price(BigDecimal.valueOf(120)),
+            new Date()
+        );
+        when(transferPlayerUseCase.execute(any(), any(), any(), any())).thenReturn(mockTransfer);
         doNothing().when(updatePlayerPerformanceUseCase).execute(any(), any());
 
         mockMvc.perform(post("/api/players/recruit")
@@ -133,7 +145,11 @@ class PlayerControllerIntegrationTest {
                 .content("""
                     {"playerId":55,"sourceTeamId":1,"targetTeamId":2,"transferPrice":120}
                     """))
-            .andExpect(status().isNoContent());
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.transferId").value(100L))
+            .andExpect(jsonPath("$.playerId").value(55L))
+            .andExpect(jsonPath("$.sourceTeamId").value(1L))
+            .andExpect(jsonPath("$.targetTeamId").value(2L));
 
         mockMvc.perform(patch("/api/players/55/performance")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -151,4 +167,5 @@ class PlayerControllerIntegrationTest {
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("missing"));
     }
+
 }

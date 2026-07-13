@@ -6,7 +6,6 @@ import java.math.BigDecimal;
 /**
  * Use Case pour recruter un nouveau joueur
  *
- * Respecte l'architecture hexagonale:
  * - Orchestre la création d'une entité Player du domaine
  * - Valide les données d'un joueur nouveau
  * - Met à jour l'équipe (budget - prix, ajout du joueur)

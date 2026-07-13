@@ -113,6 +113,48 @@ class PlayerTest {
     }
 
     @Test
+    @DisplayName("Doit retirer la titularisation d'un joueur titulaire")
+    void shouldRemoveTitularisationFromTitulairePlayer() {
+        Player titulairePlayer = new Player(
+            new PlayerIdentifier(playerId, "Jane", "Smith", "JS", teamId),
+            new PlayerStat(PositionEnum.ST, performanceNote, marketPrice, true),
+            new PlayerVersion(0, new Date(), new Date())
+        );
+
+        Player updatedPlayer = titulairePlayer.removeTitularisation();
+
+        assertTrue(titulairePlayer.stats().isTitulaire());
+        assertFalse(updatedPlayer.stats().isTitulaire());
+        assertNotSame(titulairePlayer, updatedPlayer);
+    }
+
+    @Test
+    @DisplayName("Doit attribuer la titularisation à un joueur non titulaire")
+    void shouldAssignTitularisationToNonTitulairePlayer() {
+        Player updatedPlayer = player.assignTitularisation();
+
+        assertFalse(player.stats().isTitulaire());
+        assertTrue(updatedPlayer.stats().isTitulaire());
+        assertNotSame(player, updatedPlayer);
+    }
+
+    @Test
+    @DisplayName("Doit autoriser le transfert après retrait de la titularisation")
+    void shouldAllowTransferAfterRemovingTitularisation() {
+        Player titulairePlayer = new Player(
+            new PlayerIdentifier(playerId, "Jane", "Smith", "JS", teamId),
+            new PlayerStat(PositionEnum.ST, performanceNote, marketPrice, true),
+            new PlayerVersion(0, new Date(), new Date())
+        );
+
+        Player benchedPlayer = titulairePlayer.removeTitularisation();
+        Player transferredPlayer = benchedPlayer.transferTo(new TeamId(2L));
+
+        assertTrue(benchedPlayer.canBeTransferred());
+        assertEquals(2L, transferredPlayer.identifier().teamId().value());
+    }
+
+    @Test
     @DisplayName("Doit lever une exception lors du transfert d'un joueur titulaire")
     void shouldThrowExceptionWhenTransferringTitulairPlayer() {
         PositionEnum position = PositionEnum.ST;
@@ -149,6 +191,24 @@ class PlayerTest {
         assertEquals(player.identifier().firstName(), transferredPlayer.identifier().firstName());
         assertEquals(player.identifier().lastName(), transferredPlayer.identifier().lastName());
         assertEquals(player.identifier().acronym(), transferredPlayer.identifier().acronym());
+    }
+
+    @Test
+    @DisplayName("Doit conserver les données du joueur lors du retrait de titularisation")
+    void shouldPreservePlayerDataWhenRemovingTitularisation() {
+        Player titulairePlayer = new Player(
+            new PlayerIdentifier(playerId, "Jane", "Smith", "JS", teamId),
+            new PlayerStat(PositionEnum.ST, performanceNote, marketPrice, true),
+            new PlayerVersion(0, new Date(), new Date())
+        );
+
+        Player updatedPlayer = titulairePlayer.removeTitularisation();
+
+        assertEquals(titulairePlayer.identifier(), updatedPlayer.identifier());
+        assertEquals(titulairePlayer.stats().position(), updatedPlayer.stats().position());
+        assertEquals(titulairePlayer.stats().performanceNote(), updatedPlayer.stats().performanceNote());
+        assertEquals(titulairePlayer.stats().marketPrice(), updatedPlayer.stats().marketPrice());
+        assertEquals(titulairePlayer.version(), updatedPlayer.version());
     }
 }
 

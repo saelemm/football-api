@@ -3,14 +3,15 @@ package com.foot.adapter.rest.controller;
 import com.foot.adapter.rest.dto.CreateTeamRequest;
 import com.foot.adapter.rest.dto.IdResponse;
 import com.foot.adapter.rest.dto.PlayerResponse;
+import com.foot.adapter.rest.dto.SwapPlayerTitularisationRequest;
 import com.foot.adapter.rest.dto.TeamResponse;
-import com.foot.adapter.rest.dto.TransferResponse;
 import com.foot.adapter.rest.mapper.RestDtoMapper;
 import entity.PlayerId;
 import entity.TeamId;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import usecase.CreateTeamUseCase;
 import usecase.GetTeamDetailsUseCase;
-import usecase.GetTeamTransferHistoryUseCase;
+import usecase.SwapPlayerTitularisationUseCase;
 
 import java.util.List;
 
@@ -30,16 +31,16 @@ public class TeamController {
 
     private final CreateTeamUseCase createTeamUseCase;
     private final GetTeamDetailsUseCase getTeamDetailsUseCase;
-    private final GetTeamTransferHistoryUseCase getTeamTransferHistoryUseCase;
+    private final SwapPlayerTitularisationUseCase swapPlayerTitularisationUseCase;
 
     public TeamController(
         CreateTeamUseCase createTeamUseCase,
         GetTeamDetailsUseCase getTeamDetailsUseCase,
-        GetTeamTransferHistoryUseCase getTeamTransferHistoryUseCase
+        SwapPlayerTitularisationUseCase swapPlayerTitularisationUseCase
     ) {
         this.createTeamUseCase = createTeamUseCase;
         this.getTeamDetailsUseCase = getTeamDetailsUseCase;
-        this.getTeamTransferHistoryUseCase = getTeamTransferHistoryUseCase;
+        this.swapPlayerTitularisationUseCase = swapPlayerTitularisationUseCase;
     }
 
     @GetMapping
@@ -82,32 +83,15 @@ public class TeamController {
             .toList();
     }
 
-    @GetMapping("/{teamId}/transfers")
-    public List<TransferResponse> getAllTransfers(@PathVariable Long teamId) {
-        return getTeamTransferHistoryUseCase.findAllTransfers(new TeamId(teamId)).stream()
-            .map(RestDtoMapper::toResponse)
-            .toList();
+    @PatchMapping("/{teamId}/players/titularisation/swap")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void swapTitularisation(@PathVariable Long teamId, @RequestBody SwapPlayerTitularisationRequest request) {
+        swapPlayerTitularisationUseCase.execute(
+            new TeamId(teamId),
+            new PlayerId(request.titulairePlayerId()),
+            new PlayerId(request.replacementPlayerId())
+        );
     }
 
-    @GetMapping("/{teamId}/transfers/incoming")
-    public List<TransferResponse> getIncomingTransfers(@PathVariable Long teamId) {
-        return getTeamTransferHistoryUseCase.findIncoming(new TeamId(teamId)).stream()
-            .map(RestDtoMapper::toResponse)
-            .toList();
-    }
-
-    @GetMapping("/{teamId}/transfers/outgoing")
-    public List<TransferResponse> getOutgoingTransfers(@PathVariable Long teamId) {
-        return getTeamTransferHistoryUseCase.findOutgoing(new TeamId(teamId)).stream()
-            .map(RestDtoMapper::toResponse)
-            .toList();
-    }
-
-    @GetMapping("/{teamId}/transfers/player/{playerId}")
-    public List<TransferResponse> getTransfersByPlayer(@PathVariable Long teamId, @PathVariable Long playerId) {
-        return getTeamTransferHistoryUseCase.findByPlayerId(new TeamId(teamId), new PlayerId(playerId)).stream()
-            .map(RestDtoMapper::toResponse)
-            .toList();
-    }
 }
 

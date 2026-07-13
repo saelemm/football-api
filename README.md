@@ -28,9 +28,9 @@ API de gestion d'equipes, joueurs et transferts, structuree en architecture hexa
 
 ## Demarrage rapide Docker Compose
 
-### Mode 1 - stack complete en Docker
+### Stack complete en Docker
 
-Le `docker compose up --build` suffit pour demarrer :
+Le `docker compose up --build -d` suffit pour demarrer :
 
 - PostgreSQL
 - l'application `football-bootstrap`
@@ -40,7 +40,7 @@ Le `docker compose up --build` suffit pour demarrer :
 
 ```bash
 docker compose down -v
-docker compose up --build
+docker compose up --build -d
 ```
 
 Swagger UI sera disponible sur:
