@@ -16,13 +16,8 @@ public record Price(BigDecimal value) {
         NumberValidator.requirePositive(value, ErrorMessages.PRIX_ZERO);
     }
 
-    public Price increaseBy(BigDecimal addedValue) {
-        return new Price(value.add(addedValue));
-    }
-
-    public Price increaseByPercentage(BigDecimal percentage) {
-        NumberValidator.requirePositive(percentage, ErrorMessages.POURCENTAGE_NEGATIF);
-        BigDecimal increase = value.multiply(percentage).divide(BigDecimal.valueOf(100));
-        return new Price(value.add(increase));
+    public Price updateByAddition(BigDecimal addedValue) {
+        BigDecimal result = value.add(addedValue);
+        return new Price(result.max(BigDecimal.ZERO));
     }
 }

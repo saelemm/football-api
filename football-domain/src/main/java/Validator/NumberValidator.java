@@ -23,6 +23,18 @@ public final class NumberValidator {
         }
     }
 
+    public static void requireInRange(BigDecimal value, BigDecimal min, BigDecimal max, String message) {
+        if (min.compareTo(BigDecimal.ZERO) > 0) {
+            requirePositive(value, message);
+        }
+
+        requireNonNull(value, message);
+
+        if (value.compareTo(min) < 0 || value.compareTo(max) > 0) {
+            throw new IllegalArgumentException(message);
+        }
+    }
+
     public static void requireInRange(float value, float min, float max, String message) {
         if (min > 0.0f) {
             requirePositive(value, message);

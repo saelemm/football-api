@@ -34,7 +34,7 @@ Le `docker compose up --build -d` suffit pour demarrer :
 
 - PostgreSQL
 - l'application `football-bootstrap`
-- l'execution automatique des migrations Flyway `V1`, `V2`, `V3`
+- l'execution automatique des migrations Flyway `V1`, `V2`, `V3`, `V4`
 - l'injection des donnees de base
 - l'exposition HTTP sur `8080`
 

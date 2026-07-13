@@ -16,14 +16,4 @@ public record Note(Float value) {
         NullValidator.requireNonNull(value, NOTE_NULL);
         NumberValidator.requireInRange(value, 0.0f, 10.0f, NOTE_OUTBOUND);
     }
-
-    public Note improve(Float amount) {
-        float newValue = Math.min(value + amount, 10.0f);
-        return new Note(newValue);
-    }
-
-    public Note decline(Float amount) {
-        float newValue = Math.max(value - amount, 0.0f);
-        return new Note(newValue);
-    }
 }

@@ -10,6 +10,9 @@ import entity.TeamId;
 import entity.TeamIdentifier;
 import entity.TeamStat;
 import entity.Transfer;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.OptimisticLockException;
+import jakarta.transaction.Transactional;
 import port.ITeamRepository;
 import java.util.List;
 import java.util.Optional;
@@ -22,15 +25,18 @@ public class TeamRepositoryAdapter implements ITeamRepository {
     private final TeamSpringRepository teamRepository;
     private final PlayerSpringRepository playerRepository;
     private final TransferSpringRepository transferRepository;
+    private final EntityManager entityManager;
 
     public TeamRepositoryAdapter(
         TeamSpringRepository teamRepository,
         PlayerSpringRepository playerRepository,
-        TransferSpringRepository transferRepository
+        TransferSpringRepository transferRepository,
+        EntityManager entityManager
     ) {
         this.teamRepository = teamRepository;
         this.playerRepository = playerRepository;
         this.transferRepository = transferRepository;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -49,8 +55,36 @@ public class TeamRepositoryAdapter implements ITeamRepository {
     }
 
     @Override
+    @Transactional
     public Long save(Team team) {
-        TeamJpa saved = teamRepository.save(toJpa(team));
+        TeamJpa teamJpa = toJpa(team);
+        TeamJpa saved;
+
+        if (teamJpa.getId() != null) {
+            TeamJpa managedEntity = entityManager.find(TeamJpa.class, teamJpa.getId());
+            if (managedEntity != null) {
+                int expectedCurrentVersion = Math.max(0, teamJpa.getVersion() - 1);
+                if (!Integer.valueOf(expectedCurrentVersion).equals(managedEntity.getVersion())) {
+                    throw new OptimisticLockException(
+                        "Optimistic lock conflict for team " + teamJpa.getId()
+                            + " (expected version " + expectedCurrentVersion
+                            + ", actual version " + managedEntity.getVersion() + ")"
+                    );
+                }
+
+                managedEntity.setName(teamJpa.getName());
+                managedEntity.setAcronym(teamJpa.getAcronym());
+                managedEntity.setBudget(teamJpa.getBudget());
+                managedEntity.setUpdatedAt(teamJpa.getUpdatedAt());
+                saved = managedEntity;
+                entityManager.flush();
+            } else {
+                saved = teamRepository.save(teamJpa);
+            }
+        } else {
+            saved = teamRepository.save(teamJpa);
+        }
+
         return saved.getId();
     }
 
@@ -79,7 +113,7 @@ public class TeamRepositoryAdapter implements ITeamRepository {
 
         return new Team(
             new TeamIdentifier(teamId, jpa.getName(), jpa.getAcronym()),
-            new TeamStat(jpa.getBudget(), jpa.getCreatedAt(), jpa.getUpdatedAt()),
+            new TeamStat(jpa.getBudget(), jpa.getCreatedAt(), jpa.getUpdatedAt(), jpa.getVersion()),
             playerIds,
             transferHistory
         );
@@ -92,6 +126,7 @@ public class TeamRepositoryAdapter implements ITeamRepository {
         jpa.setName(team.teamId().name());
         jpa.setAcronym(team.teamId().acronym());
         jpa.setBudget(team.teamStat().budget());
+        jpa.setVersion(team.teamStat().version() == null ? 0 : team.teamStat().version());
         jpa.setCreatedAt(team.teamStat().creation());
         jpa.setUpdatedAt(team.teamStat().lastUpdate());
         return jpa;

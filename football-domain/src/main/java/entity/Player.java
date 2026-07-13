@@ -19,41 +19,9 @@ import static Errors.ErrorMessages.TITULAIRE_NE_PEUT_PAS_ETRE_TRANSFERE;
 public record Player(PlayerIdentifier identifier,
                      PlayerStat stats,
                      PlayerVersion version) {
-    
-    public Player updatePerformance(Note newNote) {
-        PlayerStat updatedStats = new PlayerStat(
-                stats.position(),
-                newNote,
-                stats.marketPrice(),
-                stats.isTitulaire()
-        );
-        return new Player(identifier, updatedStats, version);
-    }
 
-    public Player removeTitularisation() {
-        return new Player(
-                identifier,
-                new PlayerStat(
-                        stats.position(),
-                        stats.performanceNote(),
-                        stats.marketPrice(),
-                        false
-                ),
-                version
-        );
-    }
-
-    public Player assignTitularisation() {
-        return new Player(
-                identifier,
-                new PlayerStat(
-                        stats.position(),
-                        stats.performanceNote(),
-                        stats.marketPrice(),
-                        true
-                ),
-                version
-        );
+    public Player updateStats(PlayerStat updatedStats) {
+        return new Player(identifier, updatedStats, version.incrementVersion());
     }
 
     // Retourne un nouveau Player après transfert
@@ -67,7 +35,7 @@ public record Player(PlayerIdentifier identifier,
                 identifier.acronym(),
                 newTeamId
         );
-        return new Player(updatedIdentifier, stats, version);
+        return new Player(updatedIdentifier, stats, version.incrementVersion());
     }
 
     public boolean canBeTransferred() {

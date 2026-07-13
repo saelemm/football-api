@@ -3,6 +3,7 @@ package com.foot.adapter.rest.controller;
 import com.foot.adapter.rest.dto.RecruitPlayerRequest;
 import com.foot.adapter.rest.dto.TransferPlayerRequest;
 import com.foot.adapter.rest.dto.UpdatePerformanceRequest;
+import com.foot.adapter.rest.dto.UpdatePriceRequest;
 import entity.Player;
 import entity.PlayerId;
 import entity.PlayerIdentifier;
@@ -23,6 +24,7 @@ import usecase.GetPlayerDetailsUseCase;
 import usecase.RecruitPlayerUseCase;
 import usecase.TransferPlayerUseCase;
 import usecase.UpdatePlayerPerformanceUseCase;
+import usecase.UpdatePlayerPriceUseCase;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -43,6 +45,8 @@ class PlayerControllerUnitTest {
     private TransferPlayerUseCase transferPlayerUseCase;
     @Mock
     private UpdatePlayerPerformanceUseCase updatePlayerPerformanceUseCase;
+    @Mock
+    private UpdatePlayerPriceUseCase updatePlayerPriceUseCase;
 
     @InjectMocks
     private PlayerController controller;
@@ -82,9 +86,11 @@ class PlayerControllerUnitTest {
         assertEquals(42L, transferResponse.playerId());
 
         controller.updatePerformance(42L, new UpdatePerformanceRequest(9.1f));
+        controller.updatePrice(42L, new UpdatePriceRequest(100.0f));
 
         verify(transferPlayerUseCase).execute(any(), any(), any(), any());
         verify(updatePlayerPerformanceUseCase).execute(any(), any());
+        verify(updatePlayerPriceUseCase).execute(any(), any());
     }
 
 }

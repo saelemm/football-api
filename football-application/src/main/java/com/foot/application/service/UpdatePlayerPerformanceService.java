@@ -22,7 +22,7 @@ public class UpdatePlayerPerformanceService implements UpdatePlayerPerformanceUs
         Player player = playerRepository.findById(playerId)
             .orElseThrow(() -> new PlayerNotFoundException("Joueur introuvable : " + playerId.value()));
 
-        Player updated = player.updatePerformance(new Note(newPerformance));
+        Player updated = player.updateStats(player.stats().updatePerformance(new Note(newPerformance)));
         playerRepository.save(updated);
     }
 }

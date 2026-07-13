@@ -6,6 +6,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -28,6 +29,10 @@ public class TeamJpa {
 
     @Column(nullable = false)
     private BigDecimal budget;
+
+    @Version
+    @Column(nullable = false)
+    private Integer version;
 
     @Column(name = "created_at", nullable = false)
     private Date createdAt;

@@ -1,11 +1,6 @@
 package com.foot.adapter.rest.controller;
 
-import com.foot.adapter.rest.dto.IdResponse;
-import com.foot.adapter.rest.dto.PlayerResponse;
-import com.foot.adapter.rest.dto.RecruitPlayerRequest;
-import com.foot.adapter.rest.dto.TransferPlayerRequest;
-import com.foot.adapter.rest.dto.TransferResponse;
-import com.foot.adapter.rest.dto.UpdatePerformanceRequest;
+import com.foot.adapter.rest.dto.*;
 import com.foot.adapter.rest.mapper.RestDtoMapper;
 import entity.PlayerId;
 import entity.PositionEnum;
@@ -20,10 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import usecase.GetPlayerDetailsUseCase;
-import usecase.RecruitPlayerUseCase;
-import usecase.TransferPlayerUseCase;
-import usecase.UpdatePlayerPerformanceUseCase;
+import usecase.*;
+
+import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/players")
@@ -34,17 +28,20 @@ public class PlayerController {
     private final RecruitPlayerUseCase recruitPlayerUseCase;
     private final TransferPlayerUseCase transferPlayerUseCase;
     private final UpdatePlayerPerformanceUseCase updatePlayerPerformanceUseCase;
+    private final UpdatePlayerPriceUseCase updatePlayerPriceUseCase;
 
     public PlayerController(
         GetPlayerDetailsUseCase getPlayerDetailsUseCase,
         RecruitPlayerUseCase recruitPlayerUseCase,
         TransferPlayerUseCase transferPlayerUseCase,
-        UpdatePlayerPerformanceUseCase updatePlayerPerformanceUseCase
+        UpdatePlayerPerformanceUseCase updatePlayerPerformanceUseCase,
+        UpdatePlayerPriceUseCase updatePlayerPriceUseCase
     ) {
         this.getPlayerDetailsUseCase = getPlayerDetailsUseCase;
         this.recruitPlayerUseCase = recruitPlayerUseCase;
         this.transferPlayerUseCase = transferPlayerUseCase;
         this.updatePlayerPerformanceUseCase = updatePlayerPerformanceUseCase;
+        this.updatePlayerPriceUseCase = updatePlayerPriceUseCase;
     }
 
     @GetMapping("/{playerId}")
@@ -84,6 +81,12 @@ public class PlayerController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updatePerformance(@PathVariable Long playerId, @RequestBody UpdatePerformanceRequest request) {
         updatePlayerPerformanceUseCase.execute(new PlayerId(playerId), request.performance());
+    }
+
+    @PatchMapping("/{playerId}/price")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updatePrice(@PathVariable Long playerId, @RequestBody UpdatePriceRequest request) {
+        updatePlayerPriceUseCase.execute(new PlayerId(playerId), BigDecimal.valueOf(request.price()));
     }
 }
 

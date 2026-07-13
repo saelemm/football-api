@@ -2,7 +2,6 @@ package entity;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import Errors.InsufficientBudgetException;
 import Validator.NullValidator;
@@ -57,9 +56,7 @@ public record Team(TeamIdentifier teamId,
 
         return new Team(
                 teamId,
-                new TeamStat(teamStat.budget().subtract(playerPrice.value()),
-                        teamStat.creation(),
-                        new Date()),
+                teamStat.incrementVersionWithBudget(teamStat.budget().subtract(playerPrice.value())),
                 updatedPlayerIds,
                 updatedTransfers
         );
@@ -87,9 +84,7 @@ public record Team(TeamIdentifier teamId,
 
         return new Team(
                 teamId,
-                new TeamStat(teamStat.budget().add(playerRefund.value()),
-                        teamStat.creation(),
-                        new Date()),
+                teamStat.incrementVersionWithBudget(teamStat.budget().add(playerRefund.value())),
                 updatedPlayerIds,
                 updatedTransfers
         );

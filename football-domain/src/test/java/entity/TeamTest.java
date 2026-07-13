@@ -110,6 +110,7 @@ class TeamTest {
         assertEquals(1, updatedTeam.playerIds().size());
         assertTrue(updatedTeam.playerIds().contains(playerId));
         assertEquals(1, updatedTeam.transferHistory().size());
+        assertEquals(team.teamStat().version() + 1, updatedTeam.teamStat().version());
     }
 
     @Test
@@ -162,6 +163,30 @@ class TeamTest {
         assertEquals(BigDecimal.valueOf(10000.0), updatedTeam.teamStat().budget());
         assertEquals(0, updatedTeam.playerIds().size());
         assertEquals(2, updatedTeam.transferHistory().size());
+        assertEquals(team.teamStat().version() + 2, updatedTeam.teamStat().version());
+    }
+
+    @Test
+    @DisplayName("Doit mettre à jour lastUpdate lors du recrutement")
+    void shouldUpdateLastUpdateWhenRecruiting() throws InterruptedException {
+        PlayerId playerId = new PlayerId(100L);
+        Price price = new Price(BigDecimal.valueOf(1000.0));
+        Transfer transfer = new Transfer(
+            new TransferId(1L),
+            playerId,
+            new TeamId(2L),
+            teamId,
+            price,
+            new Date()
+        );
+
+        Date initialLastUpdate = team.teamStat().lastUpdate();
+        Thread.sleep(5);
+
+        Team updatedTeam = team.addPlayer(playerId, price, transfer);
+
+        assertTrue(updatedTeam.teamStat().lastUpdate().after(initialLastUpdate));
+        assertEquals(team.teamStat().creation(), updatedTeam.teamStat().creation());
     }
 
     @Test

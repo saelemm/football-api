@@ -3,6 +3,7 @@ CREATE TABLE teams (
                        name            VARCHAR(100) NOT NULL UNIQUE,
                        acronym         VARCHAR(10)  NOT NULL UNIQUE,
                        budget          NUMERIC(12,2) NOT NULL DEFAULT 0,
+                       version         INT NOT NULL DEFAULT 0,
                        created_at      TIMESTAMP NOT NULL DEFAULT now(),
                        updated_at      TIMESTAMP NOT NULL DEFAULT now()
 );

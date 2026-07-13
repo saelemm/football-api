@@ -6,8 +6,7 @@ import Errors.PlayerNotFoundException;
 /**
  * Use Case pour mettre à jour la performance d'un joueur
  *
- * Respecte l'architecture hexagonale:
- * - Orchestre l'entité Player du domaine
+ * - Orchestre l'entité Player du domaine pour la performance
  * - Valide que la note est dans la plage valide
  * - Persiste les changements
  */

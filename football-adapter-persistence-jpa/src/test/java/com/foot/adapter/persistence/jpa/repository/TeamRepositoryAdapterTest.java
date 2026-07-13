@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.orm.jpa.JpaOptimisticLockingFailureException;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -108,6 +109,66 @@ class TeamRepositoryAdapterTest extends AbstractJpaContainerTest {
         assertEquals(2, adapter.findAll().size());
     }
 
+    @Test
+    @DisplayName("doit incrementer la version de l'equipe lors du recrutement")
+    void shouldIncrementTeamVersionWhenRecruiting() {
+        Long teamId = adapter.save(domainTeam(0L, "Inter", "INT", BigDecimal.valueOf(50000.0)));
+        Team loadedTeam = adapter.findById(new TeamId(teamId)).orElseThrow();
+
+        Team recruitedTeam = loadedTeam.addPlayer(
+            new entity.PlayerId(999L),
+            new entity.Price(BigDecimal.valueOf(2500.0)),
+            new entity.Transfer(
+                new entity.TransferId(1L),
+                new entity.PlayerId(999L),
+                null,
+                new TeamId(teamId),
+                new entity.Price(BigDecimal.valueOf(2500.0)),
+                new Date()
+            )
+        );
+        adapter.save(recruitedTeam);
+
+        Team reloaded = adapter.findById(new TeamId(teamId)).orElseThrow();
+        assertEquals(loadedTeam.teamStat().version() + 1, reloaded.teamStat().version());
+    }
+
+    @Test
+    @DisplayName("doit lever une OptimisticLockException avec une version equipe obsolete")
+    void shouldThrowOptimisticLockExceptionOnStaleTeamVersion() {
+        Long teamId = adapter.save(domainTeam(0L, "Milan", "MIL", BigDecimal.valueOf(50000.0)));
+        Team staleTeam = adapter.findById(new TeamId(teamId)).orElseThrow();
+
+        Team firstUpdate = staleTeam.addPlayer(
+            new entity.PlayerId(1000L),
+            new entity.Price(BigDecimal.valueOf(3000.0)),
+            new entity.Transfer(
+                new entity.TransferId(2L),
+                new entity.PlayerId(1000L),
+                null,
+                new TeamId(teamId),
+                new entity.Price(BigDecimal.valueOf(3000.0)),
+                new Date()
+            )
+        );
+        adapter.save(firstUpdate);
+
+        Team staleUpdate = staleTeam.addPlayer(
+            new entity.PlayerId(1001L),
+            new entity.Price(BigDecimal.valueOf(2000.0)),
+            new entity.Transfer(
+                new entity.TransferId(3L),
+                new entity.PlayerId(1001L),
+                null,
+                new TeamId(teamId),
+                new entity.Price(BigDecimal.valueOf(2000.0)),
+                new Date()
+            )
+        );
+
+        assertThrows(JpaOptimisticLockingFailureException.class, () -> adapter.save(staleUpdate));
+    }
+
     private Team domainTeam(Long id, String name, String acronym, BigDecimal budget) {
         Date now = new Date();
         return new Team(
@@ -123,6 +184,7 @@ class TeamRepositoryAdapterTest extends AbstractJpaContainerTest {
         team.setName(name);
         team.setAcronym(acronym);
         team.setBudget(budget);
+        team.setVersion(0);
         team.setCreatedAt(new Date());
         team.setUpdatedAt(new Date());
         return teamSpringRepository.save(team);

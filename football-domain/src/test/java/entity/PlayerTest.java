@@ -47,7 +47,7 @@ class PlayerTest {
     @DisplayName("Doit mettre à jour la performance et renvoyer une nouvelle instance de Player")
     void shouldUpdatePerformance() {
         Note newNote = new Note(8.5f);
-        Player updatedPlayer = player.updatePerformance(newNote);
+        Player updatedPlayer = player.updateStats(player.stats().updatePerformance(newNote));
 
         // Joueur original inchangé
         assertEquals(7.5f, player.stats().performanceNote().value());
@@ -63,7 +63,7 @@ class PlayerTest {
     @DisplayName("Doit mettre à jour la performance avec la valeur minimale")
     void shouldUpdatePerformanceWithMinValue() {
         Note newNote = new Note(0.0f);
-        Player updatedPlayer = player.updatePerformance(newNote);
+        Player updatedPlayer = player.updateStats(player.stats().updatePerformance(newNote));
 
         assertEquals(0.0f, updatedPlayer.stats().performanceNote().value());
     }
@@ -72,7 +72,7 @@ class PlayerTest {
     @DisplayName("Doit mettre à jour la performance avec la valeur maximale")
     void shouldUpdatePerformanceWithMaxValue() {
         Note newNote = new Note(10.0f);
-        Player updatedPlayer = player.updatePerformance(newNote);
+        Player updatedPlayer = player.updateStats(player.stats().updatePerformance(newNote));
 
         assertEquals(10.0f, updatedPlayer.stats().performanceNote().value());
     }
@@ -121,17 +121,17 @@ class PlayerTest {
             new PlayerVersion(0, new Date(), new Date())
         );
 
-        Player updatedPlayer = titulairePlayer.removeTitularisation();
+        Player updatedPlayer = titulairePlayer.updateStats(titulairePlayer.stats().removeTitularisation());
 
         assertTrue(titulairePlayer.stats().isTitulaire());
         assertFalse(updatedPlayer.stats().isTitulaire());
-        assertNotSame(titulairePlayer, updatedPlayer);
+        assertNotSame(titulairePlayer.stats(), updatedPlayer);
     }
 
     @Test
     @DisplayName("Doit attribuer la titularisation à un joueur non titulaire")
     void shouldAssignTitularisationToNonTitulairePlayer() {
-        Player updatedPlayer = player.assignTitularisation();
+        Player updatedPlayer = player.updateStats(player.stats().assignTitularisation());
 
         assertFalse(player.stats().isTitulaire());
         assertTrue(updatedPlayer.stats().isTitulaire());
@@ -147,7 +147,7 @@ class PlayerTest {
             new PlayerVersion(0, new Date(), new Date())
         );
 
-        Player benchedPlayer = titulairePlayer.removeTitularisation();
+        Player benchedPlayer = titulairePlayer.updateStats(titulairePlayer.stats().removeTitularisation());
         Player transferredPlayer = benchedPlayer.transferTo(new TeamId(2L));
 
         assertTrue(benchedPlayer.canBeTransferred());
@@ -202,13 +202,53 @@ class PlayerTest {
             new PlayerVersion(0, new Date(), new Date())
         );
 
-        Player updatedPlayer = titulairePlayer.removeTitularisation();
+        Player updatedPlayer = titulairePlayer.updateStats(titulairePlayer.stats().removeTitularisation());
 
         assertEquals(titulairePlayer.identifier(), updatedPlayer.identifier());
         assertEquals(titulairePlayer.stats().position(), updatedPlayer.stats().position());
         assertEquals(titulairePlayer.stats().performanceNote(), updatedPlayer.stats().performanceNote());
         assertEquals(titulairePlayer.stats().marketPrice(), updatedPlayer.stats().marketPrice());
-        assertEquals(titulairePlayer.version(), updatedPlayer.version());
+    }
+
+    @Test
+    @DisplayName("Doit incrementer la version lors du transfert")
+    void shouldIncrementVersionWhenTransferring() {
+        int initialVersion = player.version().version();
+
+        Player transferredPlayer = player.transferTo(new TeamId(2L));
+
+        assertEquals(initialVersion + 1, transferredPlayer.version().version());
+    }
+
+    @Test
+    @DisplayName("Doit mettre a jour updatedAt lors du transfert")
+    void shouldUpdateUpdatedAtWhenTransferring() throws InterruptedException {
+        Date initialUpdatedAt = player.version().updatedAt();
+
+        Thread.sleep(5);
+        Player transferredPlayer = player.transferTo(new TeamId(2L));
+
+        assertTrue(transferredPlayer.version().updatedAt().after(initialUpdatedAt));
+    }
+
+    @Test
+    @DisplayName("Doit incrementer la version lors de la mise a jour des stats")
+    void shouldIncrementVersionWhenUpdatingStats() {
+        int initialVersion = player.version().version();
+
+        Player updatedPlayer = player.updateStats(player.stats().updatePerformance(new Note(8.5f)));
+
+        assertEquals(initialVersion + 1, updatedPlayer.version().version());
+    }
+
+    @Test
+    @DisplayName("Doit conserver createdAt lors de la mise a jour des stats")
+    void shouldKeepCreatedAtWhenUpdatingStats() {
+        Date initialCreatedAt = player.version().createdAt();
+
+        Player updatedPlayer = player.updateStats(player.stats().updatePerformance(new Note(8.5f)));
+
+        assertEquals(initialCreatedAt, updatedPlayer.version().createdAt());
     }
 }
 

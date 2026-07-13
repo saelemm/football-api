@@ -12,6 +12,8 @@ import entity.PlayerVersion;
 import entity.Price;
 import entity.TeamId;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.OptimisticLockException;
+import jakarta.transaction.Transactional;
 import port.IPlayerRepository;
 import java.util.Date;
 import java.util.List;
@@ -36,8 +38,43 @@ public class PlayerRepositoryAdapter implements IPlayerRepository {
     }
 
     @Override
+    @Transactional
     public Long save(Player player) {
-        PlayerJpa saved = playerRepository.save(toJpa(player));
+        PlayerJpa playerJpa = toJpa(player);
+        PlayerJpa saved;
+
+        // For updates, domain sends version n while DB currently stores n-1.
+        // We verify this invariant to enforce optimistic locking at adapter level.
+        if (playerJpa.getId() != null) {
+            PlayerJpa managedEntity = entityManager.find(PlayerJpa.class, playerJpa.getId());
+            if (managedEntity != null) {
+                int expectedCurrentVersion = Math.max(0, playerJpa.getVersion() - 1);
+                if (!Integer.valueOf(expectedCurrentVersion).equals(managedEntity.getVersion())) {
+                    throw new OptimisticLockException(
+                        "Optimistic lock conflict for player " + playerJpa.getId()
+                            + " (expected version " + expectedCurrentVersion
+                            + ", actual version " + managedEntity.getVersion() + ")"
+                    );
+                }
+
+                managedEntity.setFirstName(playerJpa.getFirstName());
+                managedEntity.setLastName(playerJpa.getLastName());
+                managedEntity.setAcronym(playerJpa.getAcronym());
+                managedEntity.setPosition(playerJpa.getPosition());
+                managedEntity.setPerformanceNote(playerJpa.getPerformanceNote());
+                managedEntity.setMarketPrice(playerJpa.getMarketPrice());
+                managedEntity.setTitulaire(playerJpa.isTitulaire());
+                managedEntity.setTeam(playerJpa.getTeam());
+                managedEntity.setUpdatedAt(playerJpa.getUpdatedAt());
+                saved = managedEntity;
+                entityManager.flush();
+            } else {
+                saved = playerRepository.save(playerJpa);
+            }
+        } else {
+            saved = playerRepository.save(playerJpa);
+        }
+
         return saved.getId();
     }
 

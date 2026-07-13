@@ -16,6 +16,7 @@ import entity.TransferId;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,16 +25,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import usecase.GetPlayerDetailsUseCase;
-import usecase.RecruitPlayerUseCase;
-import usecase.TransferPlayerUseCase;
-import usecase.UpdatePlayerPerformanceUseCase;
+import usecase.*;
 
 import java.math.BigDecimal;
 import java.util.Date;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -76,15 +75,21 @@ class PlayerControllerIntegrationTest {
         }
 
         @Bean
+        UpdatePlayerPriceUseCase updatePlayerPriceUseCase() {
+            return Mockito.mock(UpdatePlayerPriceUseCase.class);
+        }
+
+        @Bean
         PlayerController playerController(
             GetPlayerDetailsUseCase getPlayerDetailsUseCase,
             RecruitPlayerUseCase recruitPlayerUseCase,
             TransferPlayerUseCase transferPlayerUseCase,
-            UpdatePlayerPerformanceUseCase updatePlayerPerformanceUseCase
+            UpdatePlayerPerformanceUseCase updatePlayerPerformanceUseCase,
+            UpdatePlayerPriceUseCase updatePlayerPriceUseCase
         ) {
             return new PlayerController(getPlayerDetailsUseCase, recruitPlayerUseCase,
                 transferPlayerUseCase,
-                updatePlayerPerformanceUseCase);
+                updatePlayerPerformanceUseCase, updatePlayerPriceUseCase);
         }
     }
 
@@ -102,6 +107,9 @@ class PlayerControllerIntegrationTest {
 
     @Autowired
     private UpdatePlayerPerformanceUseCase updatePlayerPerformanceUseCase;
+
+    @Autowired
+    private UpdatePlayerPriceUseCase updatePlayerPriceUseCase;
 
     @Test
     void shouldGetPlayer() throws Exception {
@@ -166,6 +174,21 @@ class PlayerControllerIntegrationTest {
         mockMvc.perform(get("/api/players/404"))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.message").value("missing"));
+    }
+
+    @Test
+    void shouldMapOptimisticLockingFailureToConflict() throws Exception {
+        doThrow(new ObjectOptimisticLockingFailureException(Player.class, 3L))
+            .when(updatePlayerPriceUseCase).execute(any(), any());
+
+        mockMvc.perform(patch("/api/players/3/price")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"price":100.0}
+                    """))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.status").value(409))
+            .andExpect(jsonPath("$.error").value("Conflict"));
     }
 
 }

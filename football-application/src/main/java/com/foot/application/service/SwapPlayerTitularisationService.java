@@ -39,8 +39,8 @@ public class SwapPlayerTitularisationService implements SwapPlayerTitularisation
 
         validateSwap(titulairePlayer, replacementPlayer);
 
-        playerRepository.save(titulairePlayer.removeTitularisation());
-        playerRepository.save(replacementPlayer.assignTitularisation());
+        playerRepository.save(titulairePlayer.updateStats(titulairePlayer.stats().removeTitularisation()));
+        playerRepository.save(replacementPlayer.updateStats(replacementPlayer.stats().assignTitularisation()));
     }
 
     private void validateSwap(Player titulairePlayer, Player replacementPlayer) {

@@ -53,26 +53,26 @@ class PriceTest {
     }
 
     @Test
-    @DisplayName("Doit augmenter le prix par pourcentage")
-    void shouldIncreaseByPercentage() {
-        Price price = new Price(BigDecimal.valueOf(100.0));
-        Price increased = price.increaseByPercentage(BigDecimal.valueOf(10));
-        assertEquals(BigDecimal.valueOf(110.0), increased.value());
-    }
-
-    @Test
     @DisplayName("Doit augmenter le prix par valeur ajoutée")
     void shouldIncreaseByAddedValue() {
         Price price = new Price(BigDecimal.valueOf(100.0));
-        Price increased = price.increaseBy(BigDecimal.valueOf(25.0));
+        Price increased = price.updateByAddition(BigDecimal.valueOf(25.0));
         assertEquals(BigDecimal.valueOf(125.0), increased.value());
     }
 
     @Test
-    @DisplayName("ne Doit pas dépasser la valeur maximale lors de l'augmentation")
-    void shouldNotExceedMaxValue() {
-        Price price = new Price(BigDecimal.valueOf(95.0));
-        Price increased = price.increaseByPercentage(BigDecimal.valueOf(100));
-        assertTrue(increased.value().compareTo(BigDecimal.valueOf(190.0)) >= 0);
+    @DisplayName("Doit diminuer le prix par valeur négative")
+    void shouldDecreaseByNegativeValue() {
+        Price price = new Price(BigDecimal.valueOf(100.0));
+        Price increased = price.updateByAddition(BigDecimal.valueOf(-25.0));
+        assertEquals(BigDecimal.valueOf(75.0), increased.value());
+    }
+
+    @Test
+    @DisplayName("Doit diminuer le prix au maximum à 0")
+    void shouldDecreaseMaximumToZero() {
+        Price price = new Price(BigDecimal.valueOf(100.0));
+        Price increased = price.updateByAddition(BigDecimal.valueOf(-150.0));
+        assertEquals(BigDecimal.ZERO, increased.value());
     }
 }

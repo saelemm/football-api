@@ -12,4 +12,40 @@ public record PlayerStat(PositionEnum position,
                          Note performanceNote,
                          Price marketPrice,
                          boolean isTitulaire) {
+
+    public PlayerStat updatePrice(Price price) {
+        return new PlayerStat(
+                this.position(),
+                this.performanceNote(),
+                price,
+                this.isTitulaire()
+        );
+    }
+
+    public PlayerStat updatePerformance(Note newNote) {
+        return new PlayerStat(
+                this.position(),
+                newNote,
+                this.marketPrice(),
+                this.isTitulaire()
+        );
+    }
+
+    public PlayerStat removeTitularisation() {
+                return new PlayerStat(
+                        this.position(),
+                        this.performanceNote(),
+                        this.marketPrice(),
+                        false
+                );
+    }
+
+    public PlayerStat assignTitularisation() {
+        return new PlayerStat(
+            this.position(),
+            this.performanceNote(),
+            this.marketPrice(),
+                   true
+            );
+    }
 }

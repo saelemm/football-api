@@ -106,8 +106,8 @@ class DomainIntegrationTest {
     @Test
     @DisplayName("Doit permettre d'échanger la titularisation puis de transférer l'ancien titulaire")
     void shouldSwapTitularisationAndTransferFormerStarter() {
-        Player formerStarter = player.removeTitularisation();
-        Player newStarter = nonTitulairePlayer.assignTitularisation();
+        Player formerStarter = player.updateStats(player.stats().removeTitularisation());
+        Player newStarter = nonTitulairePlayer.updateStats(nonTitulairePlayer.stats().assignTitularisation());
 
         assertTrue(formerStarter.canBeTransferred());
         assertFalse(newStarter.canBeTransferred());
@@ -200,7 +200,7 @@ class DomainIntegrationTest {
 
         assertEquals(oldNote, player.stats().performanceNote());
 
-        Player updatedPlayer = player.updatePerformance(newNote);
+        Player updatedPlayer = player.updateStats(player.stats().updatePerformance(newNote));
 
         // L'original reste inchangé
         assertEquals(oldNote, player.stats().performanceNote());
