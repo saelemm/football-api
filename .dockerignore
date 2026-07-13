@@ -1,0 +1,10 @@
+.git
+.gitignore
+.idea
+**/target
+**/.DS_Store
+README.md
+ARCHITECTURE.md
+REVISION.md
+sql
+

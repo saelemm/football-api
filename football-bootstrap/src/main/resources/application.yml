@@ -6,6 +6,7 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
   jpa:
+    packages-to-scan: com.foot.adapter.persistence.jpa.entity
     hibernate:
       ddl-auto: validate
     open-in-view: false

@@ -16,7 +16,7 @@ CREATE TABLE players (
                          last_name           VARCHAR(80) NOT NULL,
                          acronym             VARCHAR(10) NOT NULL,
                          position            player_position NOT NULL,
-                         performance_note    NUMERIC(4,2) NOT NULL CHECK (performance_note BETWEEN 0 AND 10),
+                         performance_note    REAL NOT NULL CHECK (performance_note BETWEEN 0 AND 10),
                          market_price        NUMERIC(12,2) NOT NULL CHECK (market_price >= 0),
                          is_titulaire        BOOLEAN NOT NULL DEFAULT false,
                          team_id             BIGINT REFERENCES teams(id) ON DELETE SET NULL,

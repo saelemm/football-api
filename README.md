@@ -26,5 +26,38 @@ API de gestion d'equipes, joueurs et transferts, structuree en architecture hexa
 ./mvnw -pl football-bootstrap -am spring-boot:run
 ```
 
+## Demarrage rapide Docker Compose
+
+### Mode 1 - stack complete en Docker
+
+Le `docker compose up --build` suffit pour demarrer :
+
+- PostgreSQL
+- l'application `football-bootstrap`
+- l'execution automatique des migrations Flyway `V1`, `V2`, `V3`
+- l'injection des donnees de base
+- l'exposition HTTP sur `8080`
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+Swagger UI sera disponible sur:
+
+- `http://localhost:8080/swagger-ui/index.html`
+
+Arret:
+
+```bash
+docker compose down
+```
+
+Arret + suppression volume PostgreSQL (reset complet des donnees):
+
+```bash
+docker compose down -v
+```
+
 Voir aussi `ARCHITECTURE.md` pour la vue d'ensemble.
 
