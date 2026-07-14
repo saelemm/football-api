@@ -8,8 +8,8 @@ import static Errors.ErrorMessages.TITULAIRE_NE_PEUT_PAS_ETRE_TRANSFERE;
 /**
  * Entitee principale représentant un joueur.
  * Trois éléments principaux : l'identifiant, les statistiques et la version du joueur.
- * Limiter à 3 éléments uniquement afin de limiter le nombres d'arguments sur le constructeur et segmenter les
- * responsabilitées, principe SRP.
+ * Limiter à 3 éléments uniquement afin de limiter le nombre d'arguments sur le constructeur et segmenter les
+ * responsabilités, principe SRP.
  *
  * @param identifier Entity contenant tout les identifiants.
  * @param stats Entity contenant toutes les statisques.

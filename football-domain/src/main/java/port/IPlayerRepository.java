@@ -3,7 +3,9 @@ package port;
 import entity.Player;
 import entity.PlayerId;
 import entity.TeamId;
+
 import java.util.Optional;
+import pagination.PagedResult;
 
 /**
  * Port de persistance pour les joueurs
@@ -42,6 +44,15 @@ public interface IPlayerRepository {
      * @param teamId ID de l'équipe
      * @return Liste des joueurs de l'équipe
      */
-    java.util.List<Player> findByTeamId(TeamId teamId);
+    PagedResult<Player> findByTeamId(TeamId teamId, int page, int size, String sortBy, String direction);
+
+    /**
+     * Récupère les joueurs d'une équipe filtrés par titularisation.
+     *
+     * @param teamId ID de l'équipe
+     * @param titulaire true pour les titulaires, false pour les remplaçants
+     * @return Page de joueurs filtrés
+     */
+    PagedResult<Player> findByTeamIdAndTitulaire(TeamId teamId, boolean titulaire, int page, int size, String sortBy, String direction);
 }
 

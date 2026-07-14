@@ -1,17 +1,18 @@
 package com.foot.adapter.persistence.jpa.repository.spring;
 
 import com.foot.adapter.persistence.jpa.entity.TransferJpa;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TransferSpringRepository extends JpaRepository<TransferJpa, Long> {
 
-    List<TransferJpa> findByPlayerId(Long playerId);
+    Page<TransferJpa> findByPlayerId(Long playerId, Pageable pageable);
 
-    List<TransferJpa> findBySourceTeamIdOrTargetTeamId(Long sourceTeamId, Long targetTeamId);
+    Page<TransferJpa> findBySourceTeamIdOrTargetTeamId(Long sourceTeamId, Long targetTeamId, Pageable pageable);
 
-    List<TransferJpa> findBySourceTeamId(Long sourceTeamId);
+    Page<TransferJpa> findBySourceTeamId(Long sourceTeamId, Pageable pageable);
 
-    List<TransferJpa> findByTargetTeamId(Long targetTeamId);
+    Page<TransferJpa> findByTargetTeamId(Long targetTeamId, Pageable pageable);
 }
 

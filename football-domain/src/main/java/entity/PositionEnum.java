@@ -1,7 +1,7 @@
 package entity;
 
 /**
- * Enum de prositions des joueurs
+ * Enum de positions des joueurs
  *
  * Source : https://fifafootballvideogames.fandom.com/wiki/Soccer_positions
  */

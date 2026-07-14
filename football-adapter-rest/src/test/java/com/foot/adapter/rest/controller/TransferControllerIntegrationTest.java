@@ -17,6 +17,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
+import pagination.PagedResult;
 import usecase.GetTeamTransferHistoryUseCase;
 
 import java.math.BigDecimal;
@@ -69,35 +70,43 @@ class TransferControllerIntegrationTest {
             new Price(BigDecimal.valueOf(25_000_000)),
             new Date()
         );
-        when(getTeamTransferHistoryUseCase.findAllTransfers(new TeamId(1L))).thenReturn(List.of(transfer));
+        when(getTeamTransferHistoryUseCase.findAllTransfers(new TeamId(1L), 0, 20, "transferDate", "desc"))
+            .thenReturn(new PagedResult<>(List.of(transfer), 0, 20, 1, 1, true, true, "transferDate", "desc"));
 
         mockMvc.perform(get("/api/teams/1/transfers"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].transferId").value(9L))
-            .andExpect(jsonPath("$[0].playerId").value(7L));
+            .andExpect(jsonPath("$.content[0].transferId").value(9L))
+            .andExpect(jsonPath("$.content[0].playerId").value(7L))
+            .andExpect(jsonPath("$.sortBy").value("transferDate"));
     }
 
     @Test
     void shouldGetIncomingTransfers() throws Exception {
-        when(getTeamTransferHistoryUseCase.findIncoming(new TeamId(2L))).thenReturn(List.of());
+        when(getTeamTransferHistoryUseCase.findIncoming(new TeamId(2L), 1, 5, "playerId", "asc"))
+            .thenReturn(new PagedResult<>(List.of(), 1, 5, 0, 0, false, true, "playerId", "asc"));
 
-        mockMvc.perform(get("/api/teams/2/transfers/incoming"))
+        mockMvc.perform(get("/api/teams/2/transfers/incoming?page=1&size=5&sortBy=PLAYER_ID&direction=ASC"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$").isArray());
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.page").value(1))
+            .andExpect(jsonPath("$.sortBy").value("playerId"));
     }
 
     @Test
     void shouldGetOutgoingTransfers() throws Exception {
-        when(getTeamTransferHistoryUseCase.findOutgoing(new TeamId(3L))).thenReturn(List.of());
+        when(getTeamTransferHistoryUseCase.findOutgoing(new TeamId(3L), 2, 3, "transferPrice", "desc"))
+            .thenReturn(new PagedResult<>(List.of(), 2, 3, 0, 0, false, true, "transferPrice", "desc"));
 
-        mockMvc.perform(get("/api/teams/3/transfers/outgoing"))
+        mockMvc.perform(get("/api/teams/3/transfers/outgoing?page=2&size=3&sortBy=TRANSFER_PRICE&direction=DESC"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$").isArray());
+            .andExpect(jsonPath("$.content").isArray())
+            .andExpect(jsonPath("$.page").value(2))
+            .andExpect(jsonPath("$.direction").value("desc"));
     }
 
     @Test
     void shouldMapTeamNotFound() throws Exception {
-        when(getTeamTransferHistoryUseCase.findAllTransfers(new TeamId(999L)))
+        when(getTeamTransferHistoryUseCase.findAllTransfers(new TeamId(999L), 0, 20, "transferDate", "desc"))
             .thenThrow(new TeamNotFoundException("missing team"));
 
         mockMvc.perform(get("/api/teams/999/transfers"))

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pagination.PagedResult;
 import port.IPlayerRepository;
 import port.ITeamRepository;
 
@@ -50,12 +51,13 @@ class GetTeamDetailsServiceTest {
     @DisplayName("Doit retourner toutes les equipes")
     void shouldReturnAllTeams() {
         List<Team> teams = List.of(team(1L, "PSG", "PSG"), team(2L, "OM", "OM"));
-        when(teamRepository.findAll()).thenReturn(teams);
+        when(teamRepository.findAll(0, 20, "name", "asc"))
+            .thenReturn(new PagedResult<>(teams, 0, 20, 2, 1, true, true, "name", "asc"));
 
-        List<Team> result = service.findAllTeams();
+        PagedResult<Team> result = service.findAllTeams(0, 20, "name", "asc");
 
-        assertEquals(2, result.size());
-        assertEquals("PSG", result.get(0).teamId().name());
+        assertEquals(2, result.content().size());
+        assertEquals("PSG", result.content().stream().findFirst().get().teamId().name());
     }
 
     @Test
@@ -86,14 +88,15 @@ class GetTeamDetailsServiceTest {
     void shouldReturnCurrentPlayers() {
         TeamId teamId = new TeamId(1L);
         when(teamRepository.findById(teamId)).thenReturn(Optional.of(team(1L, "PSG", "PSG")));
-        when(playerRepository.findByTeamId(teamId)).thenReturn(List.of(
-            player(10L, teamId, true),
-            player(11L, teamId, false)
-        ));
+        when(playerRepository.findByTeamId(teamId, 0, 20, "name", "asc"))
+            .thenReturn(new PagedResult<>(
+                List.of(player(10L, teamId, true), player(11L, teamId, false)),
+                0, 20, 2, 1, true, true, "name", "asc"
+            ));
 
-        List<Player> result = service.findCurrentPlayers(teamId);
+        PagedResult<Player> result = service.findCurrentPlayers(teamId, 0, 20, "name", "asc");
 
-        assertEquals(2, result.size());
+        assertEquals(2, result.content().size());
     }
 
     @Test
@@ -101,17 +104,17 @@ class GetTeamDetailsServiceTest {
     void shouldReturnOnlyStarters() {
         TeamId teamId = new TeamId(1L);
         when(teamRepository.findById(teamId)).thenReturn(Optional.of(team(1L, "PSG", "PSG")));
-        when(playerRepository.findByTeamId(teamId)).thenReturn(List.of(
-            player(10L, teamId, true),
-            player(11L, teamId, false),
-            player(12L, teamId, true)
-        ));
+        when(playerRepository.findByTeamIdAndTitulaire(teamId, true, 0, 20, "name", "asc"))
+            .thenReturn(new PagedResult<>(
+                List.of(player(10L, teamId, true), player(12L, teamId, true)),
+                0, 20, 2, 1, true, true, "name", "asc"
+            ));
 
-        List<Player> result = service.findTitulaires(teamId);
+        PagedResult<Player> result = service.findTitulaires(teamId, 0, 20, "name", "asc");
 
-        assertEquals(2, result.size());
-        assertTrue(result.get(0).stats().isTitulaire());
-        assertTrue(result.get(1).stats().isTitulaire());
+        assertEquals(2, result.content().size());
+        assertTrue(result.content().get(0).stats().isTitulaire());
+        assertTrue(result.content().get(1).stats().isTitulaire());
     }
 
     @Test
@@ -119,17 +122,85 @@ class GetTeamDetailsServiceTest {
     void shouldReturnOnlyBenchPlayers() {
         TeamId teamId = new TeamId(1L);
         when(teamRepository.findById(teamId)).thenReturn(Optional.of(team(1L, "PSG", "PSG")));
-        when(playerRepository.findByTeamId(teamId)).thenReturn(List.of(
-            player(10L, teamId, true),
-            player(11L, teamId, false),
-            player(12L, teamId, false)
-        ));
+        when(playerRepository.findByTeamIdAndTitulaire(teamId, false, 0, 20, "name", "asc"))
+            .thenReturn(new PagedResult<>(
+                List.of(player(11L, teamId, false), player(12L, teamId, false)),
+                0, 20, 2, 1, true, true, "name", "asc"
+            ));
 
-        List<Player> result = service.findRemplacants(teamId);
+        PagedResult<Player> result = service.findRemplacants(teamId, 0, 20, "name", "asc");
 
-        assertEquals(2, result.size());
-        assertFalse(result.get(0).stats().isTitulaire());
-        assertFalse(result.get(1).stats().isTitulaire());
+        assertEquals(2, result.content().size());
+        assertFalse(result.content().get(0).stats().isTitulaire());
+        assertFalse(result.content().get(1).stats().isTitulaire());
+    }
+
+    @Test
+    @DisplayName("Doit deleguer la pagination et le tri des equipes")
+    void shouldDelegateTeamsPaginationAndSorting() {
+        List<Team> teams = List.of(team(2L, "OM", "OM"));
+        when(teamRepository.findAll(1, 5, "budget", "desc"))
+            .thenReturn(new PagedResult<>(teams, 1, 5, 11, 3, false, false, "budget", "desc"));
+
+        PagedResult<Team> result = service.findAllTeams(1, 5, "budget", "desc");
+
+        assertEquals(1, result.content().size());
+        assertEquals("OM", result.content().get(0).teamId().name());
+        assertEquals(11, result.totalElements());
+    }
+
+    @Test
+    @DisplayName("Doit deleguer la pagination et le tri des joueurs d'une equipe")
+    void shouldDelegatePlayersPaginationAndSorting() {
+        TeamId teamId = new TeamId(1L);
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team(1L, "PSG", "PSG")));
+        when(playerRepository.findByTeamId(teamId, 2, 10, "marketPrice", "desc"))
+            .thenReturn(new PagedResult<>(
+                List.of(player(12L, teamId, false)),
+                2, 10, 21, 3, false, false, "marketPrice", "desc"
+            ));
+
+        PagedResult<Player> result = service.findCurrentPlayers(teamId, 2, 10, "marketPrice", "desc");
+
+        assertEquals(1, result.content().size());
+        assertEquals(12L, result.content().get(0).identifier().id().value());
+        assertEquals(21, result.totalElements());
+    }
+
+    @Test
+    @DisplayName("Doit déléguer la pagination et le tri des titulaires")
+    void shouldDelegateStartersPaginationAndSorting() {
+        TeamId teamId = new TeamId(1L);
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team(1L, "PSG", "PSG")));
+        when(playerRepository.findByTeamIdAndTitulaire(teamId, true, 1, 4, "acronym", "desc"))
+            .thenReturn(new PagedResult<>(
+                List.of(player(21L, teamId, true)),
+                1, 4, 9, 3, false, false, "acronym", "desc"
+            ));
+
+        PagedResult<Player> result = service.findTitulaires(teamId, 1, 4, "acronym", "desc");
+
+        assertEquals(1, result.content().size());
+        assertTrue(result.content().get(0).stats().isTitulaire());
+        assertEquals(9, result.totalElements());
+    }
+
+    @Test
+    @DisplayName("Doit déléguer la pagination et le tri des remplaçants")
+    void shouldDelegateSubstitutesPaginationAndSorting() {
+        TeamId teamId = new TeamId(1L);
+        when(teamRepository.findById(teamId)).thenReturn(Optional.of(team(1L, "PSG", "PSG")));
+        when(playerRepository.findByTeamIdAndTitulaire(teamId, false, 2, 3, "marketPrice", "desc"))
+            .thenReturn(new PagedResult<>(
+                List.of(player(31L, teamId, false)),
+                2, 3, 7, 3, false, true, "marketPrice", "desc"
+            ));
+
+        PagedResult<Player> result = service.findRemplacants(teamId, 2, 3, "marketPrice", "desc");
+
+        assertEquals(1, result.content().size());
+        assertFalse(result.content().get(0).stats().isTitulaire());
+        assertEquals(7, result.totalElements());
     }
 
     private Team team(Long id, String name, String acronym) {

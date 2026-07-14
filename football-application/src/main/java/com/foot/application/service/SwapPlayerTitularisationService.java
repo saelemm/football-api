@@ -12,6 +12,7 @@ import usecase.SwapPlayerTitularisationUseCase;
 
 import java.util.List;
 
+import static Errors.ErrorMessages.AU_MOINS_UN_JOUEUR_DOIT_ETRE_RENSEIGNE;
 import static Errors.ErrorMessages.LES_DEUX_JOUEURS_DOIVENT_ETRE_DIFFERENTS;
 import static Errors.ErrorMessages.LE_JOUEUR_ENTRANT_DOIT_ETRE_NON_TITULAIRE;
 import static Errors.ErrorMessages.LE_JOUEUR_SORTANT_DOIT_ETRE_TITULAIRE;
@@ -28,18 +29,40 @@ public class SwapPlayerTitularisationService implements SwapPlayerTitularisation
     @Override
     @Transactional
     public void execute(TeamId teamId, PlayerId titulairePlayerId, PlayerId replacementPlayerId) {
-        if (titulairePlayerId.equals(replacementPlayerId)) {
+        if (titulairePlayerId == null && replacementPlayerId == null) {
+            throw new TitularisationNotAllowedException(AU_MOINS_UN_JOUEUR_DOIT_ETRE_RENSEIGNE);
+        }
+
+        if (titulairePlayerId != null && replacementPlayerId != null && titulairePlayerId.equals(replacementPlayerId)) {
             throw new TitularisationNotAllowedException(LES_DEUX_JOUEURS_DOIVENT_ETRE_DIFFERENTS);
         }
 
-        List<Player> teamPlayers = playerRepository.findByTeamId(teamId);
+        List<Player> teamPlayers = playerRepository.findByTeamId(teamId, 0, 100, "name", "asc").content();
 
-        Player titulairePlayer = findPlayerInTeam(teamPlayers, teamId, titulairePlayerId);
+        if (titulairePlayerId != null && replacementPlayerId != null) {
+            Player titulairePlayer = findPlayerInTeam(teamPlayers, teamId, titulairePlayerId);
+            Player replacementPlayer = findPlayerInTeam(teamPlayers, teamId, replacementPlayerId);
+
+            validateSwap(titulairePlayer, replacementPlayer);
+
+            playerRepository.save(titulairePlayer.updateStats(titulairePlayer.stats().removeTitularisation()));
+            playerRepository.save(replacementPlayer.updateStats(replacementPlayer.stats().assignTitularisation()));
+            return;
+        }
+
+        if (titulairePlayerId != null) {
+            Player titulairePlayer = findPlayerInTeam(teamPlayers, teamId, titulairePlayerId);
+            if (!titulairePlayer.stats().isTitulaire()) {
+                throw new TitularisationNotAllowedException(LE_JOUEUR_SORTANT_DOIT_ETRE_TITULAIRE);
+            }
+            playerRepository.save(titulairePlayer.updateStats(titulairePlayer.stats().removeTitularisation()));
+            return;
+        }
+
         Player replacementPlayer = findPlayerInTeam(teamPlayers, teamId, replacementPlayerId);
-
-        validateSwap(titulairePlayer, replacementPlayer);
-
-        playerRepository.save(titulairePlayer.updateStats(titulairePlayer.stats().removeTitularisation()));
+        if (replacementPlayer.stats().isTitulaire()) {
+            throw new TitularisationNotAllowedException(LE_JOUEUR_ENTRANT_DOIT_ETRE_NON_TITULAIRE);
+        }
         playerRepository.save(replacementPlayer.updateStats(replacementPlayer.stats().assignTitularisation()));
     }
 

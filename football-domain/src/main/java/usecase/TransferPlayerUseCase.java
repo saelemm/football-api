@@ -13,7 +13,6 @@ import entity.Transfer;
 /**
  * Use Case pour orchstrer un transfert de joueur entre deux équipes
  *
- * Respecte l'architecture hexagonale:
  * - Orchestre les entités du domaine (Player, Team, Transfer)
  * - Valide les règles métier
  * - Laisse le domaine pur (pas d'orchestration dedans)

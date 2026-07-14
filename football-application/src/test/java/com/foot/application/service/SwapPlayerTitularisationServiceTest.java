@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pagination.PagedResult;
 import port.IPlayerRepository;
 
 import java.math.BigDecimal;
@@ -50,7 +51,8 @@ class SwapPlayerTitularisationServiceTest {
         Player titulairePlayer = player(10L, teamId, true, "Starter");
         Player replacementPlayer = player(11L, teamId, false, "Bench");
 
-        when(playerRepository.findByTeamId(teamId)).thenReturn(List.of(titulairePlayer, replacementPlayer));
+        when(playerRepository.findByTeamId(teamId, 0, 100, "name", "asc"))
+            .thenReturn(new PagedResult<>(List.of(titulairePlayer, replacementPlayer), 0, 100, 2, 1, true, true, "name", "asc"));
 
         service.execute(teamId, new PlayerId(10L), new PlayerId(11L));
 
@@ -71,7 +73,8 @@ class SwapPlayerTitularisationServiceTest {
     @DisplayName("Doit lever une erreur si le joueur titulaire est introuvable dans l'équipe")
     void shouldThrowWhenTitulairePlayerIsMissingFromTeam() {
         TeamId teamId = new TeamId(1L);
-        when(playerRepository.findByTeamId(teamId)).thenReturn(List.of(player(11L, teamId, false, "Bench")));
+        when(playerRepository.findByTeamId(teamId, 0, 100, "name", "asc"))
+            .thenReturn(new PagedResult<>(List.of(player(11L, teamId, false, "Bench")), 0, 100, 1, 1, true, true, "name", "asc"));
 
         PlayerNotFoundException exception = assertThrows(PlayerNotFoundException.class,
             () -> service.execute(teamId, new PlayerId(10L), new PlayerId(11L)));
@@ -85,7 +88,8 @@ class SwapPlayerTitularisationServiceTest {
     @DisplayName("Doit lever une erreur si le remplaçant est introuvable dans l'équipe")
     void shouldThrowWhenReplacementPlayerIsMissingFromTeam() {
         TeamId teamId = new TeamId(1L);
-        when(playerRepository.findByTeamId(teamId)).thenReturn(List.of(player(10L, teamId, true, "Starter")));
+        when(playerRepository.findByTeamId(teamId, 0, 100, "name", "asc"))
+            .thenReturn(new PagedResult<>(List.of(player(10L, teamId, true, "Starter")), 0, 100, 1, 1, true, true, "name", "asc"));
 
         PlayerNotFoundException exception = assertThrows(PlayerNotFoundException.class,
             () -> service.execute(teamId, new PlayerId(10L), new PlayerId(11L)));
@@ -99,7 +103,8 @@ class SwapPlayerTitularisationServiceTest {
     @DisplayName("Doit lever une erreur si un joueur existe mais pas dans l'équipe ciblée")
     void shouldThrowWhenPlayerExistsButNotInTargetTeam() {
         TeamId targetTeamId = new TeamId(1L);
-        when(playerRepository.findByTeamId(targetTeamId)).thenReturn(List.of(player(10L, targetTeamId, true, "Starter")));
+        when(playerRepository.findByTeamId(targetTeamId, 0, 100, "name", "asc"))
+            .thenReturn(new PagedResult<>(List.of(player(10L, targetTeamId, true, "Starter")), 0, 100, 1, 1, true, true, "name", "asc"));
 
         PlayerNotFoundException exception = assertThrows(PlayerNotFoundException.class,
             () -> service.execute(targetTeamId, new PlayerId(10L), new PlayerId(11L)));
@@ -113,10 +118,10 @@ class SwapPlayerTitularisationServiceTest {
     @DisplayName("Doit refuser un échange si le joueur sortant n'est pas titulaire")
     void shouldRejectSwapWhenOutgoingPlayerIsNotStarter() {
         TeamId teamId = new TeamId(1L);
-        when(playerRepository.findByTeamId(teamId)).thenReturn(List.of(
+        when(playerRepository.findByTeamId(teamId, 0, 100, "name", "asc")).thenReturn(new PagedResult<>(List.of(
             player(10L, teamId, false, "Starter"),
             player(11L, teamId, false, "Bench")
-        ));
+        ), 0, 100, 2, 1, true, true, "name", "asc"));
 
         assertThrows(TitularisationNotAllowedException.class,
             () -> service.execute(teamId, new PlayerId(10L), new PlayerId(11L)));
@@ -128,10 +133,10 @@ class SwapPlayerTitularisationServiceTest {
     @DisplayName("Doit refuser un échange si le remplaçant est déjà titulaire")
     void shouldRejectSwapWhenReplacementIsAlreadyStarter() {
         TeamId teamId = new TeamId(1L);
-        when(playerRepository.findByTeamId(teamId)).thenReturn(List.of(
+        when(playerRepository.findByTeamId(teamId, 0, 100, "name", "asc")).thenReturn(new PagedResult<>(List.of(
             player(10L, teamId, true, "Starter"),
             player(11L, teamId, true, "Bench")
-        ));
+        ), 0, 100, 2, 1, true, true, "name", "asc"));
 
         assertThrows(TitularisationNotAllowedException.class,
             () -> service.execute(teamId, new PlayerId(10L), new PlayerId(11L)));
@@ -147,6 +152,51 @@ class SwapPlayerTitularisationServiceTest {
             () -> service.execute(teamId, new PlayerId(10L), new PlayerId(10L)));
 
         verify(playerRepository, never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("Doit refuser un échange sans aucun joueur")
+    void shouldRejectSwapWithoutAnyPlayer() {
+        TeamId teamId = new TeamId(1L);
+
+        assertThrows(TitularisationNotAllowedException.class,
+            () -> service.execute(teamId, null, null));
+
+        verify(playerRepository, never()).save(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("Doit permettre de promouvoir un remplaçant sans titulaire fourni")
+    void shouldPromoteReplacementWithoutStarter() {
+        TeamId teamId = new TeamId(1L);
+        Player replacementPlayer = player(11L, teamId, false, "Bench");
+
+        when(playerRepository.findByTeamId(teamId, 0, 100, "name", "asc"))
+            .thenReturn(new PagedResult<>(List.of(replacementPlayer), 0, 100, 1, 1, true, true, "name", "asc"));
+
+        service.execute(teamId, null, new PlayerId(11L));
+
+        ArgumentCaptor<Player> savedPlayers = ArgumentCaptor.forClass(Player.class);
+        verify(playerRepository).save(savedPlayers.capture());
+
+        assertTrue(savedPlayers.getValue().stats().isTitulaire());
+    }
+
+    @Test
+    @DisplayName("Doit permettre de rétrograder un titulaire sans remplaçant fourni")
+    void shouldDemoteStarterWithoutReplacement() {
+        TeamId teamId = new TeamId(1L);
+        Player starterPlayer = player(10L, teamId, true, "Starter");
+
+        when(playerRepository.findByTeamId(teamId, 0, 100, "name", "asc"))
+            .thenReturn(new PagedResult<>(List.of(starterPlayer), 0, 100, 1, 1, true, true, "name", "asc"));
+
+        service.execute(teamId, new PlayerId(10L), null);
+
+        ArgumentCaptor<Player> savedPlayers = ArgumentCaptor.forClass(Player.class);
+        verify(playerRepository).save(savedPlayers.capture());
+
+        assertFalse(savedPlayers.getValue().stats().isTitulaire());
     }
 
     private Player player(Long playerId, TeamId teamId, boolean titulaire, String firstName) {

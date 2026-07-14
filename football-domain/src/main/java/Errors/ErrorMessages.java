@@ -20,4 +20,5 @@ public class ErrorMessages {
     public static final String LES_DEUX_JOUEURS_DOIVENT_ETRE_DIFFERENTS = "Les deux joueurs doivent être différents";
     public static final String LE_JOUEUR_SORTANT_DOIT_ETRE_TITULAIRE = "Le joueur sortant doit être titulaire";
     public static final String LE_JOUEUR_ENTRANT_DOIT_ETRE_NON_TITULAIRE = "Le joueur entrant doit être non titulaire";
+    public static final String AU_MOINS_UN_JOUEUR_DOIT_ETRE_RENSEIGNE = "Au moins un joueur doit être renseigné";
 }

@@ -1,5 +1,6 @@
 package com.foot.adapter.persistence.jpa.repository;
 
+import Validator.EnumValidator;
 import com.foot.adapter.persistence.jpa.entity.PlayerJpa;
 import com.foot.adapter.persistence.jpa.entity.TeamJpa;
 import com.foot.adapter.persistence.jpa.repository.spring.PlayerSpringRepository;
@@ -19,6 +20,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import pagination.PagedResult;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -84,10 +89,95 @@ public class PlayerRepositoryAdapter implements IPlayerRepository {
     }
 
     @Override
-    public List<Player> findByTeamId(TeamId teamId) {
-        return playerRepository.findByTeam_Id(teamId.value()).stream()
+    public PagedResult<Player> findByTeamId(TeamId teamId, int page, int size, String sortBy, String direction) {
+        Sort.Direction sortDirection = mapSortDirection(direction);
+        String sortField = mapPlayerSortField(sortBy);
+        Page<PlayerJpa> playerPage = playerRepository.findByTeam_Id(
+            teamId.value(),
+            PageRequest.of(page, size, Sort.by(sortDirection, sortField))
+        );
+
+        return toPagedResult(playerPage, sortField, sortDirection);
+    }
+
+    @Override
+    public PagedResult<Player> findByTeamIdAndTitulaire(TeamId teamId, boolean titulaire, int page, int size, String sortBy, String direction) {
+        Sort.Direction sortDirection = mapSortDirection(direction);
+        String sortField = mapPlayerSortField(sortBy);
+        Page<PlayerJpa> playerPage = playerRepository.findByTeam_IdAndTitulaire(
+            teamId.value(),
+            titulaire,
+            PageRequest.of(page, size, Sort.by(sortDirection, sortField))
+        );
+
+        return toPagedResult(playerPage, sortField, sortDirection);
+    }
+
+    private PagedResult<Player> toPagedResult(Page<PlayerJpa> playerPage, String sortField, Sort.Direction sortDirection) {
+        List<Player> content = playerPage
+            .stream()
             .map(PlayerRepositoryAdapter::toDomain)
             .collect(Collectors.toList());
+
+        return new PagedResult<>(
+            content,
+            playerPage.getNumber(),
+            playerPage.getSize(),
+            playerPage.getTotalElements(),
+            playerPage.getTotalPages(),
+            playerPage.isFirst(),
+            playerPage.isLast(),
+            sortField,
+            sortDirection.name().toLowerCase()
+        );
+    }
+
+    private String mapPlayerSortField(String sortBy) {
+        try {
+            PlayerSortByOption option = EnumValidator.fromString(PlayerSortByOption.class, normalizeSortBy(sortBy));
+            return option.jpaField;
+        } catch (IllegalArgumentException ignored) {
+            return PlayerSortByOption.NAME.jpaField;
+        }
+    }
+
+    private Sort.Direction mapSortDirection(String direction) {
+        try {
+            SortDirectionOption dir = EnumValidator.fromString(SortDirectionOption.class, direction == null ? "ASC" : direction);
+            return dir == SortDirectionOption.DESC ? Sort.Direction.DESC : Sort.Direction.ASC;
+        } catch (IllegalArgumentException ignored) {
+            return Sort.Direction.ASC;
+        }
+    }
+
+    private String normalizeSortBy(String sortBy) {
+        if (sortBy == null) {
+            return "NAME";
+        }
+
+        return switch (sortBy.toLowerCase()) {
+            case "name", "nom", "lastname", "last_name" -> "NAME";
+            case "acronym", "acronyme" -> "ACRONYM";
+            case "marketprice", "market_price", "price", "prix" -> "MARKET_PRICE";
+            default -> sortBy;
+        };
+    }
+
+    private enum PlayerSortByOption {
+        NAME("lastName"),
+        ACRONYM("acronym"),
+        MARKET_PRICE("marketPrice");
+
+        private final String jpaField;
+
+        PlayerSortByOption(String jpaField) {
+            this.jpaField = jpaField;
+        }
+    }
+
+    private enum SortDirectionOption {
+        ASC,
+        DESC
     }
 
     static Player toDomain(PlayerJpa jpa) {

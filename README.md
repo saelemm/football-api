@@ -10,6 +10,32 @@ API de gestion d'equipes, joueurs et transferts, structuree en architecture hexa
 - `football-adapter-rest` : exposition HTTP des usecases.
 - `football-bootstrap` : point d'entree Spring Boot.
 
+## Fonctionnalites
+
+- creation / consultation d'equipes et de joueurs
+- transfert de joueurs avec retour des details du transfert
+- changement de titulaire / remplaçant
+- historique des transferts par equipe, entree / sortie
+- pagination et tri sur les listes d'equipes, joueurs et transferts
+- API documentee via Swagger UI
+
+## Endpoints
+
+- `GET /api/teams` : liste des equipes
+- `GET /api/teams/{teamId}` : detail d'une equipe
+- `GET /api/teams/{teamId}/players` : joueurs de l'equipe
+- `GET /api/teams/{teamId}/players/starters` : titulaires
+- `GET /api/teams/{teamId}/players/substitutes` : remplaçants
+- `GET /api/teams/{teamId}/transfers` : historique complet
+- `GET /api/teams/{teamId}/transfers/incoming` : transferts entrants
+- `GET /api/teams/{teamId}/transfers/outgoing` : transferts sortants
+- `POST /api/teams` : creation d'une equipe
+- `POST /api/players/recruit` : recrutement d'un joueur
+- `POST /api/players/transfer` : transfert d'un joueur
+- `PATCH /api/teams/{teamId}/players/titularisation/swap` : permutation titulaire/remplaçant
+- `PATCH /api/players/{playerId}/performance` : mise a jour performance
+- `PATCH /api/players/{playerId}/price` : mise a jour prix
+
 ## Prerequis
 
 - Java 21
@@ -34,8 +60,8 @@ Le `docker compose up --build -d` suffit pour demarrer :
 
 - PostgreSQL
 - l'application `football-bootstrap`
-- l'execution automatique des migrations Flyway `V1`, `V2`, `V3`, `V4`
-- l'injection des donnees de base
+- l'execution automatique des migrations Flyway
+- le schema et les donnees de base
 - l'exposition HTTP sur `8080`
 
 ```bash

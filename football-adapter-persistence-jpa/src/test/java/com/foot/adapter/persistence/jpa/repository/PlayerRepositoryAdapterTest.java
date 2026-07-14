@@ -19,10 +19,10 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.orm.jpa.JpaOptimisticLockingFailureException;
 import org.springframework.beans.factory.annotation.Autowired;
+import pagination.PagedResult;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -71,9 +71,90 @@ class PlayerRepositoryAdapterTest extends AbstractJpaContainerTest {
         adapter.save(domainPlayer(0L, teamId, true));
         adapter.save(domainPlayer(0L, teamId, false));
 
-        List<Player> players = adapter.findByTeamId(new TeamId(teamId));
+        PagedResult<Player> players = adapter.findByTeamId(new TeamId(teamId), 0, 20, "name", "asc");
 
-        assertEquals(2, players.size());
+        assertEquals(2, players.content().size());
+    }
+
+    @Test
+    @DisplayName("doit trier les joueurs par market price descendant")
+    void shouldSortPlayersByMarketPriceDescending() {
+        Long teamId = saveTeam("Ajax", "AJA");
+        adapter.save(domainPlayer(0L, teamId, true, "Alan", "Low", "AL", BigDecimal.valueOf(1000.0)));
+        adapter.save(domainPlayer(0L, teamId, true, "Bruno", "High", "BH", BigDecimal.valueOf(5000.0)));
+        adapter.save(domainPlayer(0L, teamId, true, "Chris", "Mid", "CM", BigDecimal.valueOf(3000.0)));
+
+        PagedResult<Player> players = adapter.findByTeamId(new TeamId(teamId), 0, 10, "marketPrice", "desc");
+
+        assertEquals(3, players.content().size());
+        assertEquals("High", players.content().get(0).identifier().lastName());
+        assertEquals("Mid", players.content().get(1).identifier().lastName());
+        assertEquals("Low", players.content().get(2).identifier().lastName());
+    }
+
+    @Test
+    @DisplayName("doit paginer les joueurs par nom sur plusieurs pages")
+    void shouldPaginatePlayersByNameAcrossPages() {
+        Long teamId = saveTeam("Benfica", "BEN");
+        adapter.save(domainPlayer(0L, teamId, true, "A", "Alpha", "AA", BigDecimal.valueOf(1000.0)));
+        adapter.save(domainPlayer(0L, teamId, true, "B", "Bravo", "BB", BigDecimal.valueOf(2000.0)));
+        adapter.save(domainPlayer(0L, teamId, true, "C", "Charlie", "CC", BigDecimal.valueOf(3000.0)));
+
+        PagedResult<Player> secondPage = adapter.findByTeamId(new TeamId(teamId), 1, 2, "name", "asc");
+
+        assertEquals(1, secondPage.content().size());
+        assertEquals("Charlie", secondPage.content().getFirst().identifier().lastName());
+        assertEquals(3, secondPage.totalElements());
+        assertEquals(2, secondPage.totalPages());
+        assertFalse(secondPage.first());
+        assertTrue(secondPage.last());
+    }
+
+    @Test
+    @DisplayName("doit paginer les titulaires d'une équipe côté SQL")
+    void shouldPaginateStartersByTeamId() {
+        Long teamId = saveTeam("Nice", "OGCN");
+        adapter.save(domainPlayer(0L, teamId, true));
+        adapter.save(domainPlayer(0L, teamId, false));
+        adapter.save(domainPlayer(0L, teamId, true));
+
+        PagedResult<Player> starters = adapter.findByTeamIdAndTitulaire(new TeamId(teamId), true, 0, 10, "name", "asc");
+
+        assertEquals(2, starters.content().size());
+        assertTrue(starters.content().stream().allMatch(player -> player.stats().isTitulaire()));
+        assertEquals(2, starters.totalElements());
+    }
+
+    @Test
+    @DisplayName("doit paginer les remplaçants d'une équipe côté SQL")
+    void shouldPaginateSubstitutesByTeamId() {
+        Long teamId = saveTeam("Lens", "RCL");
+        adapter.save(domainPlayer(0L, teamId, true));
+        adapter.save(domainPlayer(0L, teamId, false));
+        adapter.save(domainPlayer(0L, teamId, false));
+
+        PagedResult<Player> substitutes = adapter.findByTeamIdAndTitulaire(new TeamId(teamId), false, 0, 1, "marketPrice", "desc");
+
+        assertEquals(1, substitutes.content().size());
+        assertFalse(substitutes.content().getFirst().stats().isTitulaire());
+        assertEquals(2, substitutes.totalElements());
+        assertEquals("marketPrice", substitutes.sortBy());
+    }
+
+    @Test
+    @DisplayName("doit filtrer les titulaires et les trier par acronyme")
+    void shouldFilterAndSortStartersByAcronym() {
+        Long teamId = saveTeam("Porto", "POR");
+        adapter.save(domainPlayer(0L, teamId, true, "Alex", "Zulu", "ZZ", BigDecimal.valueOf(2000.0)));
+        adapter.save(domainPlayer(0L, teamId, false, "Ben", "Bench", "AA", BigDecimal.valueOf(9000.0)));
+        adapter.save(domainPlayer(0L, teamId, true, "Carl", "Starter", "BB", BigDecimal.valueOf(1000.0)));
+
+        PagedResult<Player> starters = adapter.findByTeamIdAndTitulaire(new TeamId(teamId), true, 0, 10, "acronym", "asc");
+
+        assertEquals(2, starters.content().size());
+        assertTrue(starters.content().stream().allMatch(player -> player.stats().isTitulaire()));
+        assertEquals("BB", starters.content().get(0).identifier().acronym());
+        assertEquals("ZZ", starters.content().get(1).identifier().acronym());
     }
 
     @Test
@@ -212,6 +293,15 @@ class PlayerRepositoryAdapterTest extends AbstractJpaContainerTest {
         return new Player(
             new PlayerIdentifier(new PlayerId(id), "Kylian", "Mbappe", "KM", new TeamId(teamId)),
             new PlayerStat(PositionEnum.ST, new Note(8.5f), new Price(BigDecimal.valueOf(9000.0)), titulaire),
+            new PlayerVersion(0, now, now)
+        );
+    }
+
+    private Player domainPlayer(Long id, Long teamId, boolean titulaire, String firstName, String lastName, String acronym, BigDecimal marketPrice) {
+        Date now = new Date();
+        return new Player(
+            new PlayerIdentifier(new PlayerId(id), firstName, lastName, acronym, new TeamId(teamId)),
+            new PlayerStat(PositionEnum.ST, new Note(8.5f), new Price(marketPrice), titulaire),
             new PlayerVersion(0, now, now)
         );
     }

@@ -7,7 +7,6 @@ import entity.PlayerId;
 /**
  * Use Case (Query) pour récupérer les détails d'un joueur
  *
- * Respecte l'architecture hexagonale:
  * - Orchestre la récupération des données
  * - Ne modifie rien (requête pure)
  * - Utilise le repository pour accéder aux données

@@ -3,6 +3,7 @@ package port;
 import entity.Team;
 import entity.TeamId;
 import java.util.Optional;
+import pagination.PagedResult;
 
 /**
  * Port de persistance pour les équipes
@@ -56,6 +57,7 @@ public interface ITeamRepository {
      *
      * @return Liste de toutes les équipes
      */
-    java.util.List<Team> findAll();
+    PagedResult<Team> findAll(int page, int size, String sortBy, String direction);
+
 }
 

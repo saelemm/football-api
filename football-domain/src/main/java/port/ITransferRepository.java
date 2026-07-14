@@ -4,8 +4,8 @@ import entity.Transfer;
 import entity.TransferId;
 import entity.PlayerId;
 import entity.TeamId;
-import java.util.List;
 import java.util.Optional;
+import pagination.PagedResult;
 
 /**
  * Port de persistance pour les transferts
@@ -35,32 +35,32 @@ public interface ITransferRepository {
      * Récupère tous les transferts d'un joueur
      * 
      * @param playerId ID du joueur
-     * @return Liste de tous les transferts du joueur
+     * @return Page de tous les transferts du joueur
      */
-    List<Transfer> findByPlayerId(PlayerId playerId);
-    
+    PagedResult<Transfer> findByPlayerId(PlayerId playerId, int page, int size, String sortBy, String direction);
+
     /**
      * Récupère tous les transferts impliquant une équipe (en/out)
      * 
      * @param teamId ID de l'équipe
-     * @return Liste de tous les transferts impliquant l'équipe
+     * @return Page de tous les transferts impliquant l'équipe
      */
-    List<Transfer> findByTeamId(TeamId teamId);
-    
+    PagedResult<Transfer> findByTeamId(TeamId teamId, int page, int size, String sortBy, String direction);
+
     /**
      * Récupère les transferts sortants d'une équipe
      * 
      * @param teamId ID de l'équipe source
-     * @return Liste des transferts sortants
+     * @return Page des transferts sortants
      */
-    List<Transfer> findOutgoingTransfers(TeamId teamId);
-    
+    PagedResult<Transfer> findOutgoingTransfers(TeamId teamId, int page, int size, String sortBy, String direction);
+
     /**
      * Récupère les transferts entrants vers une équipe
      * 
      * @param teamId ID de l'équipe cible
-     * @return Liste des transferts entrants
+     * @return Page des transferts entrants
      */
-    List<Transfer> findIncomingTransfers(TeamId teamId);
+    PagedResult<Transfer> findIncomingTransfers(TeamId teamId, int page, int size, String sortBy, String direction);
 }
 

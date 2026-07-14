@@ -5,11 +5,10 @@ import entity.Player;
 import entity.Team;
 import entity.TeamId;
 import org.springframework.stereotype.Service;
+import pagination.PagedResult;
 import port.IPlayerRepository;
 import port.ITeamRepository;
 import usecase.GetTeamDetailsUseCase;
-
-import java.util.List;
 
 @Service
 public class GetTeamDetailsService implements GetTeamDetailsUseCase {
@@ -23,8 +22,8 @@ public class GetTeamDetailsService implements GetTeamDetailsUseCase {
     }
 
     @Override
-    public List<Team> findAllTeams() {
-        return teamRepository.findAll();
+    public PagedResult<Team> findAllTeams(int page, int size, String sortBy, String direction) {
+        return teamRepository.findAll(normalizePage(page), normalizeSize(size), sortBy, direction);
     }
 
     @Override
@@ -34,23 +33,30 @@ public class GetTeamDetailsService implements GetTeamDetailsUseCase {
     }
 
     @Override
-    public List<Player> findCurrentPlayers(TeamId teamId) {
+    public PagedResult<Player> findCurrentPlayers(TeamId teamId, int page, int size, String sortBy, String direction) {
         execute(teamId);
-        return playerRepository.findByTeamId(teamId);
+        return playerRepository.findByTeamId(teamId, normalizePage(page), normalizeSize(size), sortBy, direction);
     }
 
     @Override
-    public List<Player> findTitulaires(TeamId teamId) {
-        return findCurrentPlayers(teamId).stream()
-            .filter(p -> p.stats().isTitulaire())
-            .toList();
+    public PagedResult<Player> findTitulaires(TeamId teamId, int page, int size, String sortBy, String direction) {
+        execute(teamId);
+        return playerRepository.findByTeamIdAndTitulaire(teamId, true, normalizePage(page), normalizeSize(size), sortBy, direction);
     }
 
     @Override
-    public List<Player> findRemplacants(TeamId teamId) {
-        return findCurrentPlayers(teamId).stream()
-            .filter(p -> !p.stats().isTitulaire())
-            .toList();
+    public PagedResult<Player> findRemplacants(TeamId teamId, int page, int size, String sortBy, String direction) {
+        execute(teamId);
+        return playerRepository.findByTeamIdAndTitulaire(teamId, false, normalizePage(page), normalizeSize(size), sortBy, direction);
+    }
+
+    private int normalizePage(int page) {
+        return Math.max(page, 0);
+    }
+
+    private int normalizeSize(int size) {
+        int bounded = size <= 0 ? 20 : size;
+        return Math.min(bounded, 100);
     }
 }
 

@@ -4,16 +4,12 @@ import Errors.TeamNotFoundException;
 import entity.Player;
 import entity.Team;
 import entity.TeamId;
-import org.aspectj.weaver.ast.Test;
-
-import java.util.List;
+import pagination.PagedResult;
 
 /**
- * Use Case (Query) pour récupérer les détails d'une équipe
+ * Use Case pour récupérer les détails d'une équipe
  *
- * Respecte l'architecture hexagonale:
  * - Orchestre la récupération des données
- * - Ne modifie rien (requête pure)
  * - Utilise le repository pour accéder aux données
  */
 public interface GetTeamDetailsUseCase {
@@ -22,7 +18,7 @@ public interface GetTeamDetailsUseCase {
      * Récupère la liste de toutes les équipes
      * @return  Liste de toutes les équipes
      */
-    List<Team> findAllTeams();
+    PagedResult<Team> findAllTeams(int page, int size, String sortBy, String direction);
 
     /**
      * Récupère les détails complets d'une équipe
@@ -42,26 +38,26 @@ public interface GetTeamDetailsUseCase {
      *
      * @throws TeamNotFoundException si l'équipe n'existe pas
      */
-    List<Player> findCurrentPlayers(TeamId teamId);
+    PagedResult<Player> findCurrentPlayers(TeamId teamId, int page, int size, String sortBy, String direction);
 
     /**
      * Récupère la liste des titulaires d'une équipe.
      *
      * @param teamId ID de l'équipe
-     * @return Liste des joueurs titulaires
+     * @return Page des joueurs titulaires
      *
      * @throws TeamNotFoundException si l'équipe n'existe pas
      */
-    List<Player> findTitulaires(TeamId teamId);
+    PagedResult<Player> findTitulaires(TeamId teamId, int page, int size, String sortBy, String direction);
 
     /**
      * Récupère la liste des remplaçants d'une équipe.
      *
      * @param teamId ID de l'équipe
-     * @return Liste des joueurs remplaçants
+     * @return Page des joueurs remplaçants
      *
      * @throws TeamNotFoundException si l'équipe n'existe pas
      */
-    List<Player> findRemplacants(TeamId teamId);
+    PagedResult<Player> findRemplacants(TeamId teamId, int page, int size, String sortBy, String direction);
 }
 

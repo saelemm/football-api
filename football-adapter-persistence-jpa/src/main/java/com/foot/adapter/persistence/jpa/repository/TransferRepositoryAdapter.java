@@ -11,6 +11,10 @@ import port.ITransferRepository;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import pagination.PagedResult;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -34,31 +38,83 @@ public class TransferRepositoryAdapter implements ITransferRepository {
     }
 
     @Override
-    public List<Transfer> findByPlayerId(PlayerId playerId) {
-        return transferRepository.findByPlayerId(playerId.value()).stream()
-            .map(TransferRepositoryAdapter::toDomain)
-            .collect(Collectors.toList());
+    public PagedResult<Transfer> findByPlayerId(PlayerId playerId, int page, int size, String sortBy, String direction) {
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        String sortField = mapTransferSortField(sortBy);
+        Page<TransferJpa> transferPage = transferRepository.findByPlayerId(
+            playerId.value(),
+            PageRequest.of(page, size, Sort.by(sortDirection, sortField))
+        );
+
+        return toPagedResult(transferPage, sortField, sortDirection);
     }
 
     @Override
-    public List<Transfer> findByTeamId(TeamId teamId) {
-        return transferRepository.findBySourceTeamIdOrTargetTeamId(teamId.value(), teamId.value()).stream()
-            .map(TransferRepositoryAdapter::toDomain)
-            .collect(Collectors.toList());
+    public PagedResult<Transfer> findByTeamId(TeamId teamId, int page, int size, String sortBy, String direction) {
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        String sortField = mapTransferSortField(sortBy);
+        Page<TransferJpa> transferPage = transferRepository.findBySourceTeamIdOrTargetTeamId(
+            teamId.value(),
+            teamId.value(),
+            PageRequest.of(page, size, Sort.by(sortDirection, sortField))
+        );
+
+        return toPagedResult(transferPage, sortField, sortDirection);
     }
 
     @Override
-    public List<Transfer> findOutgoingTransfers(TeamId teamId) {
-        return transferRepository.findBySourceTeamId(teamId.value()).stream()
-            .map(TransferRepositoryAdapter::toDomain)
-            .collect(Collectors.toList());
+    public PagedResult<Transfer> findOutgoingTransfers(TeamId teamId, int page, int size, String sortBy, String direction) {
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        String sortField = mapTransferSortField(sortBy);
+        Page<TransferJpa> transferPage = transferRepository.findBySourceTeamId(
+            teamId.value(),
+            PageRequest.of(page, size, Sort.by(sortDirection, sortField))
+        );
+
+        return toPagedResult(transferPage, sortField, sortDirection);
     }
 
     @Override
-    public List<Transfer> findIncomingTransfers(TeamId teamId) {
-        return transferRepository.findByTargetTeamId(teamId.value()).stream()
+    public PagedResult<Transfer> findIncomingTransfers(TeamId teamId, int page, int size, String sortBy, String direction) {
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        String sortField = mapTransferSortField(sortBy);
+        Page<TransferJpa> transferPage = transferRepository.findByTargetTeamId(
+            teamId.value(),
+            PageRequest.of(page, size, Sort.by(sortDirection, sortField))
+        );
+
+        return toPagedResult(transferPage, sortField, sortDirection);
+    }
+
+    private PagedResult<Transfer> toPagedResult(Page<TransferJpa> transferPage, String sortField, Sort.Direction sortDirection) {
+        List<Transfer> content = transferPage.stream()
             .map(TransferRepositoryAdapter::toDomain)
             .collect(Collectors.toList());
+
+        return new PagedResult<>(
+            content,
+            transferPage.getNumber(),
+            transferPage.getSize(),
+            transferPage.getTotalElements(),
+            transferPage.getTotalPages(),
+            transferPage.isFirst(),
+            transferPage.isLast(),
+            sortField,
+            sortDirection.name().toLowerCase()
+        );
+    }
+
+    private String mapTransferSortField(String sortBy) {
+        if (sortBy == null) {
+            return "transferDate";
+        }
+
+        return switch (sortBy.toLowerCase()) {
+            case "date", "transferdate" -> "transferDate";
+            case "transferprice", "price", "prix" -> "transferPrice";
+            case "player", "playerid", "joueur" -> "playerId";
+            default -> "transferDate";
+        };
     }
 
     static Transfer toDomain(TransferJpa jpa) {

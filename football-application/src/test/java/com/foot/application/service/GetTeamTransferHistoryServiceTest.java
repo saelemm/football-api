@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import pagination.PagedResult;
 import port.ITeamRepository;
 import port.ITransferRepository;
 
@@ -47,12 +48,13 @@ class GetTeamTransferHistoryServiceTest {
         Transfer transfer = transfer(1L, 10L, 2L, 1L, 5000.0);
 
         when(teamRepository.findById(teamId)).thenReturn(Optional.of(team(1L, "PSG", "PSG")));
-        when(transferRepository.findByTeamId(teamId)).thenReturn(List.of(transfer));
+        when(transferRepository.findByTeamId(teamId, 0, 20, "transferDate", "desc"))
+            .thenReturn(new PagedResult<>(java.util.List.of(transfer), 0, 20, 1, 1, true, true, "transferDate", "desc"));
 
-        List<Transfer> result = service.findAllTransfers(teamId);
+        PagedResult<Transfer> result = service.findAllTransfers(teamId, 0, 20, "transferDate", "desc");
 
-        assertEquals(1, result.size());
-        assertEquals(transfer, result.get(0));
+        assertEquals(1, result.content().size());
+        assertEquals(transfer, result.content().get(0));
     }
 
     @Test
@@ -62,12 +64,13 @@ class GetTeamTransferHistoryServiceTest {
         Transfer transfer = transfer(2L, 11L, 1L, 3L, 4000.0);
 
         when(teamRepository.findById(teamId)).thenReturn(Optional.of(team(1L, "PSG", "PSG")));
-        when(transferRepository.findOutgoingTransfers(teamId)).thenReturn(List.of(transfer));
+        when(transferRepository.findOutgoingTransfers(teamId, 1, 5, "transferPrice", "asc"))
+            .thenReturn(new PagedResult<>(java.util.List.of(transfer), 1, 5, 6, 2, false, true, "transferPrice", "asc"));
 
-        List<Transfer> result = service.findOutgoing(teamId);
+        PagedResult<Transfer> result = service.findOutgoing(teamId, 1, 5, "transferPrice", "asc");
 
-        assertEquals(1, result.size());
-        assertEquals(transfer, result.get(0));
+        assertEquals(1, result.content().size());
+        assertEquals(transfer, result.content().get(0));
     }
 
     @Test
@@ -77,12 +80,13 @@ class GetTeamTransferHistoryServiceTest {
         Transfer transfer = transfer(3L, 12L, 4L, 1L, 3000.0);
 
         when(teamRepository.findById(teamId)).thenReturn(Optional.of(team(1L, "PSG", "PSG")));
-        when(transferRepository.findIncomingTransfers(teamId)).thenReturn(List.of(transfer));
+        when(transferRepository.findIncomingTransfers(teamId, 2, 3, "playerId", "desc"))
+            .thenReturn(new PagedResult<>(java.util.List.of(transfer), 2, 3, 7, 3, false, true, "playerId", "desc"));
 
-        List<Transfer> result = service.findIncoming(teamId);
+        PagedResult<Transfer> result = service.findIncoming(teamId, 2, 3, "playerId", "desc");
 
-        assertEquals(1, result.size());
-        assertEquals(transfer, result.get(0));
+        assertEquals(1, result.content().size());
+        assertEquals(transfer, result.content().get(0));
     }
 
     @Test
@@ -92,7 +96,7 @@ class GetTeamTransferHistoryServiceTest {
         when(teamRepository.findById(teamId)).thenReturn(Optional.empty());
 
         TeamNotFoundException exception = assertThrows(TeamNotFoundException.class,
-            () -> service.findAllTransfers(teamId));
+            () -> service.findAllTransfers(teamId, 0, 20, "transferDate", "desc"));
 
         assertEquals("Équipe introuvable : 404", exception.getMessage());
     }

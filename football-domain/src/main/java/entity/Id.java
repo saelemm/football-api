@@ -5,7 +5,7 @@ import Validator.NullValidator;
 import static Errors.ErrorMessages.ID_NULL;
 
 /**
- * Classe générique encapsulant le principe d'identifiant sous nimporte quel type.
+ * Classe générique encapsulant le principe d'identifiant sous n'importe quel type.
  * Permet à TeamId & PlayerId de se différencier et d'éviter les collisions d'identifiant.
  * @param <T> Type générique
  */

@@ -10,15 +10,13 @@ import Validator.NumberValidator;
 import static Errors.ErrorMessages.*;
 
 /**
- * Main entity représentant une équipe. Comme pour l'entity 'Player', les responsabilitées sont segmenté en
- * trois sous entitées, l'identifiant, les statisques, la listes d'identifiants des joueurs et la liste de transfers.
+ * Main entity représentant une équipe. Comme pour l'entity 'Player', les responsabilités sont segmentées en
+ * trois sous entities, l'identifiant, les statistiques, les listes d'identifiants des joueurs et la liste de transfers.
  *
  * Comportement métier encapsulé:
  * - Gestion des joueurs et du budget
  * - Enregistrement des transferts dans l'historique
  * - Validation du budget suffisant
- *
- * Immuabilité: chaque méthode retourne une nouvelle instance
  */
 public record Team(TeamIdentifier teamId,
                    TeamStat teamStat,
@@ -91,14 +89,14 @@ public record Team(TeamIdentifier teamId,
     }
 
     /**
-     * Vérification métier: l'équipe a-t-elle assez de budget?
+     * l'équipe a-t-elle assez de budget?
      */
     public boolean hasEnoughBudget(Price price) {
         return teamStat.budget().compareTo(price.value()) >= 0;
     }
 
     /**
-     * Calcul métier: quel budget reste après une dépense?
+     * quel budget reste après une dépense?
      */
     public BigDecimal getAvailableBudget(Price price) {
         return teamStat.budget().subtract(price.value());

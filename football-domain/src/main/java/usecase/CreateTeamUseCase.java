@@ -7,7 +7,6 @@ import java.math.BigDecimal;
 /**
  * Use Case pour créer une nouvelle équipe
  *
- * Respecte l'architecture hexagonale:
  * - Orchestre la création d'une entité Team du domaine
  * - Valide les données d'entrée
  * - Génère l'ID

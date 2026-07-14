@@ -90,6 +90,42 @@ class TeamRepositoryAdapterTest extends AbstractJpaContainerTest {
     }
 
     @Test
+    @DisplayName("doit charger tous les joueurs et trier l'historique des transferts par date descendante")
+    void shouldLoadAllPlayersAndSortTransfersByDateDescending() {
+        TeamJpa team = saveTeamJpa("Juventus", "JUV", BigDecimal.valueOf(80000.0));
+        TeamJpa otherTeam = saveTeamJpa("Roma", "ROM", BigDecimal.valueOf(30000.0));
+
+        Long player1Id = savePlayerJpa(team, "Player1", "One", "P1");
+        Long player2Id = savePlayerJpa(team, "Player2", "Two", "P2");
+        Long player3Id = savePlayerJpa(team, "Player3", "Three", "P3");
+
+        Date oldest = new Date(System.currentTimeMillis() - 30_000);
+        Date newest = new Date(System.currentTimeMillis() - 10_000);
+
+        saveTransferJpa(player1Id, null, team.getId(), BigDecimal.valueOf(1500.0), oldest);
+        saveTransferJpa(player2Id, team.getId(), otherTeam.getId(), BigDecimal.valueOf(2200.0), newest);
+
+        Team loaded = adapter.findById(new TeamId(team.getId())).orElseThrow();
+
+        assertEquals(3, loaded.playerIds().size());
+        assertEquals(2, loaded.transferHistory().size());
+        assertEquals(0, BigDecimal.valueOf(2200.0).compareTo(loaded.transferHistory().get(0).transferPrice().value()));
+        assertEquals(0, BigDecimal.valueOf(1500.0).compareTo(loaded.transferHistory().get(1).transferPrice().value()));
+    }
+
+    @Test
+    @DisplayName("doit retourner l'historique vide pour une équipe sans transfert")
+    void shouldReturnEmptyTransferHistoryWhenTeamHasNoTransfers() {
+        TeamJpa team = saveTeamJpa("Sevilla", "SEV", BigDecimal.valueOf(38000.0));
+        savePlayerJpa(team, "Solo", "Player", "SP");
+
+        Team loaded = adapter.findById(new TeamId(team.getId())).orElseThrow();
+
+        assertEquals(1, loaded.playerIds().size());
+        assertTrue(loaded.transferHistory().isEmpty());
+    }
+
+    @Test
     @DisplayName("doit supprimer une équipe")
     void shouldDeleteTeam() {
         Long savedId = adapter.save(domainTeam(0L, "Arsenal", "ARS", BigDecimal.valueOf(42000.0)));
@@ -106,7 +142,7 @@ class TeamRepositoryAdapterTest extends AbstractJpaContainerTest {
         adapter.save(domainTeam(0L, "Team A", "TA", BigDecimal.valueOf(10000.0)));
         adapter.save(domainTeam(0L, "Team B", "TB", BigDecimal.valueOf(20000.0)));
 
-        assertEquals(2, adapter.findAll().size());
+        assertEquals(2, adapter.findAll(0, 20, "name", "asc").content().size());
     }
 
     @Test
@@ -206,6 +242,22 @@ class TeamRepositoryAdapterTest extends AbstractJpaContainerTest {
         return playerSpringRepository.save(player).getId();
     }
 
+    private Long savePlayerJpa(TeamJpa team, String firstName, String lastName, String acronym) {
+        PlayerJpa player = new PlayerJpa();
+        player.setFirstName(firstName);
+        player.setLastName(lastName);
+        player.setAcronym(acronym);
+        player.setPosition(entity.PositionEnum.CM);
+        player.setPerformanceNote(7.5f);
+        player.setMarketPrice(BigDecimal.valueOf(5000.0));
+        player.setTitulaire(false);
+        player.setTeam(team);
+        player.setVersion(0);
+        player.setCreatedAt(new Date());
+        player.setUpdatedAt(new Date());
+        return playerSpringRepository.save(player).getId();
+    }
+
     private void saveTransferJpa(Long playerId, Long sourceTeamId, Long targetTeamId, BigDecimal price) {
         TransferJpa transfer = new TransferJpa();
         transfer.setPlayerId(playerId);
@@ -213,6 +265,16 @@ class TeamRepositoryAdapterTest extends AbstractJpaContainerTest {
         transfer.setTargetTeamId(targetTeamId);
         transfer.setTransferPrice(price);
         transfer.setTransferDate(new Date());
+        transferSpringRepository.save(transfer);
+    }
+
+    private void saveTransferJpa(Long playerId, Long sourceTeamId, Long targetTeamId, BigDecimal price, Date transferDate) {
+        TransferJpa transfer = new TransferJpa();
+        transfer.setPlayerId(playerId);
+        transfer.setSourceTeamId(sourceTeamId);
+        transfer.setTargetTeamId(targetTeamId);
+        transfer.setTransferPrice(price);
+        transfer.setTransferDate(transferDate);
         transferSpringRepository.save(transfer);
     }
 }

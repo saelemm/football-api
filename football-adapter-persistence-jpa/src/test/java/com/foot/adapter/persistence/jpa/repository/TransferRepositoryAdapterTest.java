@@ -16,10 +16,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import pagination.PagedResult;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -78,12 +78,15 @@ class TransferRepositoryAdapterTest extends AbstractJpaContainerTest {
         Long teamDId = saveTeam("D", "D");
         Long playerId = savePlayer(teamCId);
 
-        adapter.save(new Transfer(new TransferId(0L), new PlayerId(playerId), new TeamId(teamCId), new TeamId(teamDId), new Price(BigDecimal.valueOf(1000.0)), new Date()));
-        adapter.save(new Transfer(new TransferId(0L), new PlayerId(playerId), new TeamId(teamDId), new TeamId(teamCId), new Price(BigDecimal.valueOf(1200.0)), new Date()));
+        Date older = new Date(System.currentTimeMillis() - 10_000);
+        Date newer = new Date();
+        adapter.save(new Transfer(new TransferId(0L), new PlayerId(playerId), new TeamId(teamCId), new TeamId(teamDId), new Price(BigDecimal.valueOf(1000.0)), older));
+        adapter.save(new Transfer(new TransferId(0L), new PlayerId(playerId), new TeamId(teamDId), new TeamId(teamCId), new Price(BigDecimal.valueOf(1200.0)), newer));
 
-        List<Transfer> transfers = adapter.findByPlayerId(new PlayerId(playerId));
+        PagedResult<Transfer> transfers = adapter.findByPlayerId(new PlayerId(playerId), 0, 10, "transferDate", "desc");
 
-        assertEquals(2, transfers.size());
+        assertEquals(2, transfers.content().size());
+        assertEquals(0, BigDecimal.valueOf(1200.0).compareTo(transfers.content().getFirst().transferPrice().value()));
     }
 
     @Test
@@ -98,13 +101,49 @@ class TransferRepositoryAdapterTest extends AbstractJpaContainerTest {
         adapter.save(new Transfer(new TransferId(0L), new PlayerId(player1Id), new TeamId(teamEId), new TeamId(teamFId), new Price(BigDecimal.valueOf(2000.0)), new Date()));
         adapter.save(new Transfer(new TransferId(0L), new PlayerId(player2Id), new TeamId(teamGId), new TeamId(teamEId), new Price(BigDecimal.valueOf(3000.0)), new Date()));
 
-        List<Transfer> allForTeam = adapter.findByTeamId(new TeamId(teamEId));
-        List<Transfer> outgoing = adapter.findOutgoingTransfers(new TeamId(teamEId));
-        List<Transfer> incoming = adapter.findIncomingTransfers(new TeamId(teamEId));
+        PagedResult<Transfer> allForTeam = adapter.findByTeamId(new TeamId(teamEId), 0, 10, "transferDate", "desc");
+        PagedResult<Transfer> outgoing = adapter.findOutgoingTransfers(new TeamId(teamEId), 0, 10, "transferPrice", "asc");
+        PagedResult<Transfer> incoming = adapter.findIncomingTransfers(new TeamId(teamEId), 0, 10, "playerId", "desc");
 
-        assertEquals(2, allForTeam.size());
-        assertEquals(1, outgoing.size());
-        assertEquals(1, incoming.size());
+        assertEquals(2, allForTeam.content().size());
+        assertEquals(1, outgoing.content().size());
+        assertEquals(1, incoming.content().size());
+        assertEquals("transferPrice", outgoing.sortBy());
+        assertEquals("playerId", incoming.sortBy());
+    }
+
+    @Test
+    @DisplayName("doit trier les transferts entrants par prix croissant")
+    void shouldSortIncomingTransfersByPriceAscending() {
+        Long targetTeamId = saveTeam("Target", "TGT");
+        Long sourceAId = saveTeam("SourceA", "SCA");
+        Long sourceBId = saveTeam("SourceB", "SCB");
+        Long player1Id = savePlayer(sourceAId);
+        Long player2Id = savePlayer(sourceBId);
+
+        adapter.save(new Transfer(new TransferId(0L), new PlayerId(player1Id), new TeamId(sourceAId), new TeamId(targetTeamId), new Price(BigDecimal.valueOf(9000.0)), new Date()));
+        adapter.save(new Transfer(new TransferId(0L), new PlayerId(player2Id), new TeamId(sourceBId), new TeamId(targetTeamId), new Price(BigDecimal.valueOf(2000.0)), new Date()));
+
+        PagedResult<Transfer> incoming = adapter.findIncomingTransfers(new TeamId(targetTeamId), 0, 10, "transferPrice", "asc");
+
+        assertEquals(2, incoming.content().size());
+        assertEquals(0, BigDecimal.valueOf(2000.0).compareTo(incoming.content().get(0).transferPrice().value()));
+        assertEquals(0, BigDecimal.valueOf(9000.0).compareTo(incoming.content().get(1).transferPrice().value()));
+    }
+
+    @Test
+    @DisplayName("doit inclure les recrutements avec source null dans les transferts entrants")
+    void shouldIncludeRecruitmentTransfersWithNullSourceTeam() {
+        Long targetTeamId = saveTeam("Recruit", "REC");
+        Long playerId = savePlayer(targetTeamId);
+
+        adapter.save(new Transfer(new TransferId(0L), new PlayerId(playerId), null, new TeamId(targetTeamId), new Price(BigDecimal.valueOf(1500.0)), new Date()));
+
+        PagedResult<Transfer> incoming = adapter.findIncomingTransfers(new TeamId(targetTeamId), 0, 10, "transferDate", "desc");
+
+        assertEquals(1, incoming.content().size());
+        assertNull(incoming.content().getFirst().sourceTeamId());
+        assertEquals(targetTeamId, incoming.content().getFirst().targetTeamId().value());
     }
 
     private Long saveTeam(String name, String acronym) {

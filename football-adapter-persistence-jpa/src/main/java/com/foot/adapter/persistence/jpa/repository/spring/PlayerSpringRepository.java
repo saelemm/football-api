@@ -1,11 +1,14 @@
 package com.foot.adapter.persistence.jpa.repository.spring;
 
 import com.foot.adapter.persistence.jpa.entity.PlayerJpa;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PlayerSpringRepository extends JpaRepository<PlayerJpa, Long> {
 
-    List<PlayerJpa> findByTeam_Id(Long teamId);
+    Page<PlayerJpa> findByTeam_Id(Long teamId, Pageable pageable);
+
+    Page<PlayerJpa> findByTeam_IdAndTitulaire(Long teamId, boolean titulaire, Pageable pageable);
 }
 
