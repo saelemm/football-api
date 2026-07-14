@@ -98,10 +98,10 @@ elle sert uniquement à s'assurer que l'ensemble des tests passent et que l'appl
 ## Temps passé sur le projet
 
 Première soirée : 2h30 (vendredi 10 juillet 2026)
-- Etudes des technologues nécessaires pour le projet (Spring Boot, JPA, Flyway, Docker, Swagger).
+- Etudes des technologues nécessaires pour le projet.
 - Etudes de l'architecture hexagonale, mise en place du projet, création des modules, configuration Maven, configuration Spring Boot.
 
-Première journée : 6h (samedi 11 juillet 2026)
+Première journée : 5h (samedi 11 juillet 2026)
 - Création des tables SQL sans Flyway dans un premier temps pour valider la structure des entités.
 - Implémentation des domain entity + tests unitaires
 - Création des usecases + ports
