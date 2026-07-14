@@ -159,6 +159,7 @@ public class PlayerRepositoryAdapter implements IPlayerRepository {
             case "name", "nom", "lastname", "last_name" -> "NAME";
             case "acronym", "acronyme" -> "ACRONYM";
             case "marketprice", "market_price", "price", "prix" -> "MARKET_PRICE";
+            case "performance", "note", "performance_note" -> "PERFORMANCE";
             default -> sortBy;
         };
     }
@@ -166,7 +167,8 @@ public class PlayerRepositoryAdapter implements IPlayerRepository {
     private enum PlayerSortByOption {
         NAME("lastName"),
         ACRONYM("acronym"),
-        MARKET_PRICE("marketPrice");
+        MARKET_PRICE("marketPrice"),
+        PERFORMANCE("performanceNote");
 
         private final String jpaField;
 

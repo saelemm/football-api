@@ -237,6 +237,23 @@ class TeamControllerIntegrationTest {
     }
 
     @Test
+    void shouldGetCurrentPlayersWithPerformanceSorting() throws Exception {
+        Player p = new Player(
+            new PlayerIdentifier(new PlayerId(8L), "Perf", "Player", "PP", new TeamId(10L)),
+            new PlayerStat(PositionEnum.CM, new Note(9.1f), new Price(BigDecimal.TEN), true),
+            new PlayerVersion(0, new Date(), new Date())
+        );
+        when(getTeamDetailsUseCase.findCurrentPlayers(new TeamId(10L), 0, 20, "performance", "desc"))
+            .thenReturn(new PagedResult<>(List.of(p), 0, 20, 1, 1, true, true, "performance", "desc"));
+
+        mockMvc.perform(get("/api/teams/10/players?sortBy=PERFORMANCE&direction=DESC"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content[0].id").value(8L))
+            .andExpect(jsonPath("$.sortBy").value("performance"))
+            .andExpect(jsonPath("$.direction").value("desc"));
+    }
+
+    @Test
     void shouldGetStartersWithPaginationAndSorting() throws Exception {
         Player starter = new Player(
             new PlayerIdentifier(new PlayerId(5L), "Starter", "One", "SO", new TeamId(10L)),

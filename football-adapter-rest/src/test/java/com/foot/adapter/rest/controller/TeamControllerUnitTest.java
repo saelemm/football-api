@@ -107,6 +107,20 @@ class TeamControllerUnitTest {
     }
 
     @Test
+    void shouldGetPlayersWithPerformanceSorting() {
+        Player player = player(12L, true);
+        when(getTeamDetailsUseCase.findCurrentPlayers(new TeamId(1L), 0, 20, "performance", "desc"))
+            .thenReturn(new PagedResult<>(List.of(player), 0, 20, 1, 1, true, true, "performance", "desc"));
+
+        var response = controller.getCurrentPlayers(1L, 0, 20, PlayerSortBy.PERFORMANCE, SortDirection.DESC);
+
+        assertEquals(1, response.content().size());
+        assertEquals(12L, response.content().getFirst().id());
+        assertEquals("performance", response.sortBy());
+        assertEquals("desc", response.direction());
+    }
+
+    @Test
     void shouldGetSubstitutes() {
         Player player = player(11L, false);
         when(getTeamDetailsUseCase.findRemplacants(new TeamId(1L), 1, 5, "marketPrice", "desc"))

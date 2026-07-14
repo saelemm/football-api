@@ -93,6 +93,38 @@ class PlayerRepositoryAdapterTest extends AbstractJpaContainerTest {
     }
 
     @Test
+    @DisplayName("doit trier les joueurs par note de performance descendante")
+    void shouldSortPlayersByPerformanceDescending() {
+        Long teamId = saveTeam("Chelsea", "CHE");
+        Date now = new Date();
+
+        adapter.save(new Player(
+            new PlayerIdentifier(new PlayerId(0L), "Alan", "Low", "AL", new TeamId(teamId)),
+            new PlayerStat(PositionEnum.ST, new Note(5.5f), new Price(BigDecimal.valueOf(1000.0)), true),
+            new PlayerVersion(0, now, now)
+        ));
+        adapter.save(new Player(
+            new PlayerIdentifier(new PlayerId(0L), "Bruno", "High", "BH", new TeamId(teamId)),
+            new PlayerStat(PositionEnum.ST, new Note(9.2f), new Price(BigDecimal.valueOf(5000.0)), true),
+            new PlayerVersion(0, now, now)
+        ));
+        adapter.save(new Player(
+            new PlayerIdentifier(new PlayerId(0L), "Chris", "Mid", "CM", new TeamId(teamId)),
+            new PlayerStat(PositionEnum.ST, new Note(7.1f), new Price(BigDecimal.valueOf(3000.0)), true),
+            new PlayerVersion(0, now, now)
+        ));
+
+        PagedResult<Player> players = adapter.findByTeamId(new TeamId(teamId), 0, 10, "performance", "desc");
+
+        assertEquals(3, players.content().size());
+        assertEquals("High", players.content().get(0).identifier().lastName());
+        assertEquals("Mid", players.content().get(1).identifier().lastName());
+        assertEquals("Low", players.content().get(2).identifier().lastName());
+        assertEquals("performanceNote", players.sortBy());
+        assertEquals("desc", players.direction());
+    }
+
+    @Test
     @DisplayName("doit paginer les joueurs par nom sur plusieurs pages")
     void shouldPaginatePlayersByNameAcrossPages() {
         Long teamId = saveTeam("Benfica", "BEN");

@@ -1,6 +1,5 @@
 package com.foot.adapter.persistence.jpa.entity;
 
-import com.foot.adapter.persistence.jpa.type.PostgreSQLEnumUserType;
 import entity.PositionEnum;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,10 +9,13 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import lombok.Data;
-import org.hibernate.annotations.Type;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.util.Date;
@@ -36,7 +38,8 @@ public class PlayerJpa {
     @Column(nullable = false)
     private String acronym;
 
-    @Type(PostgreSQLEnumUserType.class)
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(columnDefinition = "player_position", nullable = false)
     private PositionEnum position;
 

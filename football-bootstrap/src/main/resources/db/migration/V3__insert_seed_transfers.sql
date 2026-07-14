@@ -1,5 +1,4 @@
 -- Historique de transferts seed execute au demarrage via Flyway
--- Les joueurs restent coherents: target_team_id = equipe actuelle du joueur
 
 WITH transfer_seed (
     player_acronym,
