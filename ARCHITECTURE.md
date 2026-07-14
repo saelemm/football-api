@@ -17,18 +17,18 @@ Le coeur gère les regles metier, les adapters REST et JPA ne font que brancher 
 - gestion des equipes et des joueurs
 - transfert de joueurs avec retour du detail du transfert
 - recrutement et changement titulaire / remplaçant
-- liste des equipes et des joueurs avec pagination et tri
-- historique des transferts d'une equipe, en entree et en sortie
+- liste des équipes et des joueurs avec pagination et tri
+- historique des transferts d'une équipe, en entrée et en sortie
 
-## Sens des dependances
+## Sens des dépendances
 
-- `domain` ne depend de personne.
-- `application` depend de `domain`.
-- `adapter-rest` depend de `domain` (et est active via Spring dans le bootstrap).
-- `adapter-persistence-jpa` depend de `domain`.
-- `bootstrap` depend de tous les modules pour construire l'application runnable.
+- `domain` ne dépend de personne.
+- `application` dépend de `domain`.
+- `adapter-rest` dépend de `domain` (et est activé via Spring dans le bootstrap).
+- `adapter-persistence-jpa` dépend de `domain`.
+- `bootstrap` dépend de tous les modules pour construire l'application runnable.
 
-En pratique: les adapters dependent du metier, jamais l'inverse.
+En pratique: les adapters dépendent du métier, jamais l'inverse.
 
 Les valeurs de tri et de pagination sont valides au niveau REST puis traduites vers la persistence.
 
