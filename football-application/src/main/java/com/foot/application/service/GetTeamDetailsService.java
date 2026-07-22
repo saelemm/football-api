@@ -10,6 +10,9 @@ import port.IPlayerRepository;
 import port.ITeamRepository;
 import usecase.GetTeamDetailsUseCase;
 
+import java.util.List;
+import java.util.Map;
+
 @Service
 public class GetTeamDetailsService implements GetTeamDetailsUseCase {
 
@@ -24,6 +27,11 @@ public class GetTeamDetailsService implements GetTeamDetailsUseCase {
     @Override
     public PagedResult<Team> findAllTeams(int page, int size, String sortBy, String direction) {
         return teamRepository.findAll(normalizePage(page), normalizeSize(size), sortBy, direction);
+    }
+
+    @Override
+    public Map<Long, List<Player>> findCurrentPlayersByTeamIds(List<TeamId> teamIds) {
+        return playerRepository.findByTeamIds(teamIds);
     }
 
     @Override

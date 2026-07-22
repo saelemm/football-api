@@ -11,7 +11,7 @@ public record TeamResponse(
     BigDecimal budget,
     Date createdAt,
     Date updatedAt,
-    List<Long> playerIds,
+    List<PlayerResponse> players,
     List<TransferResponse> transferHistory
 ) {
 }

@@ -26,6 +26,7 @@ import port.ITeamRepository;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -147,6 +148,24 @@ class GetTeamDetailsServiceTest {
         assertEquals(1, result.content().size());
         assertEquals("OM", result.content().get(0).teamId().name());
         assertEquals(11, result.totalElements());
+    }
+
+    @Test
+    @DisplayName("Doit deleguer le chargement en lot des joueurs par equipes")
+    void shouldDelegateBulkPlayersLookupByTeamIds() {
+        TeamId team1 = new TeamId(1L);
+        TeamId team2 = new TeamId(2L);
+        Map<Long, List<Player>> expected = Map.of(
+            1L, List.of(player(10L, team1, true)),
+            2L, List.of(player(20L, team2, false))
+        );
+        when(playerRepository.findByTeamIds(List.of(team1, team2))).thenReturn(expected);
+
+        Map<Long, List<Player>> result = service.findCurrentPlayersByTeamIds(List.of(team1, team2));
+
+        assertEquals(2, result.size());
+        assertEquals(10L, result.get(1L).getFirst().identifier().id().value());
+        assertEquals(20L, result.get(2L).getFirst().identifier().id().value());
     }
 
     @Test

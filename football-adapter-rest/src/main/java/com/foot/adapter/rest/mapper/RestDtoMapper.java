@@ -7,6 +7,7 @@ import entity.Player;
 import entity.Team;
 import entity.Transfer;
 
+import java.util.Comparator;
 import java.util.List;
 
 public final class RestDtoMapper {
@@ -14,8 +15,14 @@ public final class RestDtoMapper {
     private RestDtoMapper() {
     }
 
-    public static TeamResponse toResponse(Team team) {
-        List<Long> playerIds = team.playerIds().stream().map(id -> id.value()).toList();
+    public static TeamResponse toResponse(Team team, List<Player> players) {
+        List<PlayerResponse> playerResponses = players.stream()
+            .sorted(
+                Comparator.comparing((Player player) -> player.identifier().lastName(), String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(player -> player.identifier().firstName(), String.CASE_INSENSITIVE_ORDER)
+            )
+            .map(RestDtoMapper::toResponse)
+            .toList();
         List<TransferResponse> transferHistory = team.transferHistory().stream().map(RestDtoMapper::toResponse).toList();
 
         return new TeamResponse(
@@ -25,9 +32,13 @@ public final class RestDtoMapper {
             team.teamStat().budget(),
             team.teamStat().creation(),
             team.teamStat().lastUpdate(),
-            playerIds,
+            playerResponses,
             transferHistory
         );
+    }
+
+    public static TeamResponse toResponse(Team team) {
+        return toResponse(team, List.of());
     }
 
     public static PlayerResponse toResponse(Player player) {

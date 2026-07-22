@@ -6,6 +6,9 @@ import entity.Team;
 import entity.TeamId;
 import pagination.PagedResult;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * Use Case pour récupérer les détails d'une équipe
  *
@@ -19,6 +22,14 @@ public interface GetTeamDetailsUseCase {
      * @return  Liste de toutes les équipes
      */
     PagedResult<Team> findAllTeams(int page, int size, String sortBy, String direction);
+
+    /**
+     * Récupère tous les joueurs courants pour un ensemble d'équipes.
+     *
+     * @param teamIds IDs des équipes
+     * @return Map indexée par teamId -> liste des joueurs de l'équipe
+     */
+    Map<Long, List<Player>> findCurrentPlayersByTeamIds(List<TeamId> teamIds);
 
     /**
      * Récupère les détails complets d'une équipe

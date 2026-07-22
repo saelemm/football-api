@@ -17,7 +17,9 @@ import jakarta.persistence.OptimisticLockException;
 import jakarta.transaction.Transactional;
 import port.IPlayerRepository;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
@@ -111,6 +113,30 @@ public class PlayerRepositoryAdapter implements IPlayerRepository {
         );
 
         return toPagedResult(playerPage, sortField, sortDirection);
+    }
+
+    @Override
+    public Map<Long, List<Player>> findByTeamIds(List<TeamId> teamIds) {
+        if (teamIds == null || teamIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Long> ids = teamIds.stream().map(TeamId::value).distinct().toList();
+        List<PlayerJpa> playerJpas = playerRepository.findByTeam_IdIn(
+            ids,
+            Sort.by(Sort.Direction.ASC, "lastName", "firstName")
+        );
+
+        Map<Long, List<Player>> grouped = new LinkedHashMap<>();
+        for (PlayerJpa playerJpa : playerJpas) {
+            if (playerJpa.getTeam() == null) {
+                continue;
+            }
+            Long teamId = playerJpa.getTeam().getId();
+            grouped.computeIfAbsent(teamId, ignored -> new java.util.ArrayList<>())
+                .add(toDomain(playerJpa));
+        }
+        return grouped;
     }
 
     private PagedResult<Player> toPagedResult(Page<PlayerJpa> playerPage, String sortField, Sort.Direction sortDirection) {

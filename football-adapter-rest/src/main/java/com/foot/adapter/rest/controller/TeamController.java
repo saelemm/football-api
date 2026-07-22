@@ -10,7 +10,9 @@ import com.foot.adapter.rest.dto.SwapPlayerTitularisationRequest;
 import com.foot.adapter.rest.dto.TeamSortBy;
 import com.foot.adapter.rest.dto.TeamResponse;
 import com.foot.adapter.rest.mapper.RestDtoMapper;
+import entity.Player;
 import entity.PlayerId;
+import entity.Team;
 import entity.TeamId;
 import pagination.PagedResult;
 import org.springframework.http.HttpStatus;
@@ -28,7 +30,8 @@ import usecase.CreateTeamUseCase;
 import usecase.GetTeamDetailsUseCase;
 import usecase.SwapPlayerTitularisationUseCase;
 
-import java.awt.print.Pageable;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 @RestController
@@ -57,9 +60,14 @@ public class TeamController {
         @RequestParam(defaultValue = "NAME") TeamSortBy sortBy,
         @RequestParam(defaultValue = "ASC") SortDirection direction
     ) {
+        PagedResult<Team> teamsPage = getTeamDetailsUseCase.findAllTeams(page, size, sortBy.value(), direction.value());
+        Map<Long, List<Player>> playersByTeamId = getTeamDetailsUseCase.findCurrentPlayersByTeamIds(
+            teamsPage.content().stream().map(team -> team.teamId().teamId()).toList()
+        );
+
         return toPageResponse(
-            getTeamDetailsUseCase.findAllTeams(page, size, sortBy.value(), direction.value()),
-            RestDtoMapper::toResponse
+            teamsPage,
+            team -> toTeamResponse(team, playersByTeamId.getOrDefault(team.teamId().teamId().value(), List.of()))
         );
     }
 
@@ -72,7 +80,9 @@ public class TeamController {
 
     @GetMapping("/{teamId}")
     public TeamResponse getTeam(@PathVariable Long teamId) {
-        return RestDtoMapper.toResponse(getTeamDetailsUseCase.execute(new TeamId(teamId)));
+        Team team = getTeamDetailsUseCase.execute(new TeamId(teamId));
+        Map<Long, List<Player>> playersByTeamId = getTeamDetailsUseCase.findCurrentPlayersByTeamIds(List.of(team.teamId().teamId()));
+        return toTeamResponse(team, playersByTeamId.getOrDefault(teamId, List.of()));
     }
 
     @GetMapping("/{teamId}/players")
@@ -140,6 +150,11 @@ public class TeamController {
             page.direction()
         );
     }
+
+    private TeamResponse toTeamResponse(Team team, List<Player> players) {
+        return RestDtoMapper.toResponse(team, players);
+    }
+
 
 }
 

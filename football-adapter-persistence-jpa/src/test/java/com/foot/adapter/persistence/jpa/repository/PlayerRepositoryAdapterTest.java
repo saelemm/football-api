@@ -23,6 +23,8 @@ import pagination.PagedResult;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -74,6 +76,24 @@ class PlayerRepositoryAdapterTest extends AbstractJpaContainerTest {
         PagedResult<Player> players = adapter.findByTeamId(new TeamId(teamId), 0, 20, "name", "asc");
 
         assertEquals(2, players.content().size());
+    }
+
+    @Test
+    @DisplayName("doit charger les joueurs de plusieurs équipes en une fois")
+    void shouldFindPlayersByTeamIds() {
+        Long team1 = saveTeam("OM", "OM");
+        Long team2 = saveTeam("PSG", "PSG");
+        adapter.save(domainPlayer(0L, team1, true, "B", "Bravo", "BB", BigDecimal.valueOf(2000.0)));
+        adapter.save(domainPlayer(0L, team1, false, "A", "Alpha", "AA", BigDecimal.valueOf(1000.0)));
+        adapter.save(domainPlayer(0L, team2, true, "C", "Charlie", "CC", BigDecimal.valueOf(3000.0)));
+
+        Map<Long, List<Player>> byTeam = adapter.findByTeamIds(List.of(new TeamId(team1), new TeamId(team2)));
+
+        assertEquals(2, byTeam.size());
+        assertEquals(2, byTeam.get(team1).size());
+        assertEquals("Alpha", byTeam.get(team1).getFirst().identifier().lastName());
+        assertEquals(1, byTeam.get(team2).size());
+        assertEquals("Charlie", byTeam.get(team2).getFirst().identifier().lastName());
     }
 
     @Test

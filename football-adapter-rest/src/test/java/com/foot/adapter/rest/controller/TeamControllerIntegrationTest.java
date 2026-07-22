@@ -24,6 +24,7 @@ import usecase.SwapPlayerTitularisationUseCase;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -188,29 +189,45 @@ class TeamControllerIntegrationTest {
 
     @Test
     void shouldGetAllTeams() throws Exception {
+        Player p = new Player(
+            new PlayerIdentifier(new PlayerId(1L), "Kylian", "Mbappe", "KM", new TeamId(1L)),
+            new PlayerStat(PositionEnum.ST, new Note(9.0f), new Price(BigDecimal.valueOf(150)), true),
+            new PlayerVersion(0, new Date(), new Date())
+        );
         when(getTeamDetailsUseCase.findAllTeams(0, 20, "name", "asc")).thenReturn(new PagedResult<>(List.of(
                 new Team(new TeamIdentifier(new TeamId(1L), "Paris Saint Germains", "PSG"),
                         new TeamStat(BigDecimal.valueOf(1000.0), new Date(), new Date()),
                         List.of(), List.of())
         ), 0, 20, 1, 1, true, true, "name", "asc"));
+        when(getTeamDetailsUseCase.findCurrentPlayersByTeamIds(List.of(new TeamId(1L))))
+            .thenReturn(Map.of(1L, List.of(p)));
 
         mockMvc.perform(get("/api/teams"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").value(1L))
+            .andExpect(jsonPath("$.content[0].players[0].lastName").value("Mbappe"))
             .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     @Test
     void shouldGetAllTeamsWithPaginationAndSorting() throws Exception {
+        Player p = new Player(
+            new PlayerIdentifier(new PlayerId(2L), "Pierre", "A", "PA", new TeamId(2L)),
+            new PlayerStat(PositionEnum.CM, new Note(7.0f), new Price(BigDecimal.valueOf(20)), true),
+            new PlayerVersion(0, new Date(), new Date())
+        );
         when(getTeamDetailsUseCase.findAllTeams(1, 5, "budget", "desc")).thenReturn(new PagedResult<>(List.of(
             new Team(new TeamIdentifier(new TeamId(2L), "OM", "OM"),
                 new TeamStat(BigDecimal.valueOf(900.0), new Date(), new Date()),
                 List.of(), List.of())
         ), 1, 5, 11, 3, false, false, "budget", "desc"));
+        when(getTeamDetailsUseCase.findCurrentPlayersByTeamIds(List.of(new TeamId(2L))))
+            .thenReturn(Map.of(2L, List.of(p)));
 
         mockMvc.perform(get("/api/teams?page=1&size=5&sortBy=BUDGET&direction=DESC"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content[0].id").value(2L))
+            .andExpect(jsonPath("$.content[0].players[0].id").value(2L))
             .andExpect(jsonPath("$.page").value(1))
             .andExpect(jsonPath("$.size").value(5))
             .andExpect(jsonPath("$.totalElements").value(11))

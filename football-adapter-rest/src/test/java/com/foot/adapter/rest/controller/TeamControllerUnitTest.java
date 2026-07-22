@@ -30,6 +30,7 @@ import usecase.SwapPlayerTitularisationUseCase;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -68,9 +69,25 @@ class TeamControllerUnitTest {
             List.of(),
             List.of()
         );
+        Player zed = new Player(
+            new PlayerIdentifier(new PlayerId(2L), "Arthur", "Zulu", "AZ", new TeamId(1L)),
+            new PlayerStat(PositionEnum.CM, new Note(7.0f), new Price(BigDecimal.TEN), true),
+            new PlayerVersion(0, new Date(), new Date())
+        );
+        Player alpha = new Player(
+            new PlayerIdentifier(new PlayerId(1L), "Bruno", "Alpha", "BA", new TeamId(1L)),
+            new PlayerStat(PositionEnum.ST, new Note(8.0f), new Price(BigDecimal.ONE), true),
+            new PlayerVersion(0, new Date(), new Date())
+        );
         when(getTeamDetailsUseCase.execute(new TeamId(1L))).thenReturn(team);
+        when(getTeamDetailsUseCase.findCurrentPlayersByTeamIds(List.of(new TeamId(1L))))
+            .thenReturn(Map.of(1L, List.of(zed, alpha)));
 
-        assertEquals("PSG", controller.getTeam(1L).name());
+        var response = controller.getTeam(1L);
+
+        assertEquals("PSG", response.name());
+        assertEquals(2, response.players().size());
+        assertEquals("Alpha", response.players().getFirst().lastName());
     }
 
     @Test

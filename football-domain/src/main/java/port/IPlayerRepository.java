@@ -4,6 +4,8 @@ import entity.Player;
 import entity.PlayerId;
 import entity.TeamId;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import pagination.PagedResult;
 
@@ -54,5 +56,13 @@ public interface IPlayerRepository {
      * @return Page de joueurs filtrés
      */
     PagedResult<Player> findByTeamIdAndTitulaire(TeamId teamId, boolean titulaire, int page, int size, String sortBy, String direction);
+
+    /**
+     * Récupère tous les joueurs pour un ensemble d'équipes en une seule requête.
+     *
+     * @param teamIds IDs des équipes ciblées
+     * @return Map indexée par teamId -> liste des joueurs de l'équipe
+     */
+    Map<Long, List<Player>> findByTeamIds(List<TeamId> teamIds);
 }
 
