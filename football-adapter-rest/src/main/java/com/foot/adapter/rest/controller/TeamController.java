@@ -1,7 +1,7 @@
 package com.foot.adapter.rest.controller;
 
 import com.foot.adapter.rest.dto.CreateTeamRequest;
-import com.foot.adapter.rest.dto.IdResponse;
+import com.foot.adapter.rest.dto.CreateTeamResponse;
 import com.foot.adapter.rest.dto.PageResponse;
 import com.foot.adapter.rest.dto.PlayerSortBy;
 import com.foot.adapter.rest.dto.PlayerResponse;
@@ -14,6 +14,7 @@ import entity.Player;
 import entity.PlayerId;
 import entity.Team;
 import entity.TeamId;
+import jakarta.validation.Valid;
 import pagination.PagedResult;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import usecase.CreateTeamUseCase;
 import usecase.GetTeamDetailsUseCase;
+import usecase.RecruitPlayerUseCase;
 import usecase.SwapPlayerTitularisationUseCase;
 
 import java.util.List;
@@ -41,15 +43,18 @@ public class TeamController {
 
     private final CreateTeamUseCase createTeamUseCase;
     private final GetTeamDetailsUseCase getTeamDetailsUseCase;
+    private final RecruitPlayerUseCase recruitPlayerUseCase;
     private final SwapPlayerTitularisationUseCase swapPlayerTitularisationUseCase;
 
     public TeamController(
         CreateTeamUseCase createTeamUseCase,
         GetTeamDetailsUseCase getTeamDetailsUseCase,
+        RecruitPlayerUseCase recruitPlayerUseCase,
         SwapPlayerTitularisationUseCase swapPlayerTitularisationUseCase
     ) {
         this.createTeamUseCase = createTeamUseCase;
         this.getTeamDetailsUseCase = getTeamDetailsUseCase;
+        this.recruitPlayerUseCase = recruitPlayerUseCase;
         this.swapPlayerTitularisationUseCase = swapPlayerTitularisationUseCase;
     }
 
@@ -73,9 +78,18 @@ public class TeamController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public IdResponse createTeam(@RequestBody CreateTeamRequest request) {
-        Long id = createTeamUseCase.execute(request.name(), request.acronym(), request.initialBudget());
-        return new IdResponse(id);
+    public CreateTeamResponse createTeam(@Valid @RequestBody CreateTeamRequest request) {
+        Long teamId = createTeamUseCase.execute(request.name(), request.acronym(), request.initialBudget());
+        Long playerId = recruitPlayerUseCase.execute(
+            request.initialPlayer().firstName(),
+            request.initialPlayer().lastName(),
+            request.initialPlayer().acronym(),
+            request.initialPlayer().position(),
+            request.initialPlayer().performance(),
+            request.initialPlayer().marketPrice(),
+            teamId
+        );
+        return new CreateTeamResponse(teamId, playerId);
     }
 
     @GetMapping("/{teamId}")

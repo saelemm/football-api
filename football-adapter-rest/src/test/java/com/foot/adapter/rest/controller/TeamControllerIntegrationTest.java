@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import pagination.PagedResult;
 import usecase.CreateTeamUseCase;
 import usecase.GetTeamDetailsUseCase;
+import usecase.RecruitPlayerUseCase;
 import usecase.SwapPlayerTitularisationUseCase;
 
 import java.math.BigDecimal;
@@ -60,6 +61,11 @@ class TeamControllerIntegrationTest {
         }
 
         @Bean
+        RecruitPlayerUseCase recruitPlayerUseCase() {
+            return Mockito.mock(RecruitPlayerUseCase.class);
+        }
+
+        @Bean
         SwapPlayerTitularisationUseCase swapPlayerTitularisationUseCase() {
             return Mockito.mock(SwapPlayerTitularisationUseCase.class);
         }
@@ -68,9 +74,10 @@ class TeamControllerIntegrationTest {
         TeamController teamController(
             CreateTeamUseCase createTeamUseCase,
             GetTeamDetailsUseCase getTeamDetailsUseCase,
+            RecruitPlayerUseCase recruitPlayerUseCase,
             SwapPlayerTitularisationUseCase swapPlayerTitularisationUseCase
         ) {
-            return new TeamController(createTeamUseCase, getTeamDetailsUseCase, swapPlayerTitularisationUseCase);
+            return new TeamController(createTeamUseCase, getTeamDetailsUseCase, recruitPlayerUseCase, swapPlayerTitularisationUseCase);
         }
     }
 
@@ -84,19 +91,70 @@ class TeamControllerIntegrationTest {
     private GetTeamDetailsUseCase getTeamDetailsUseCase;
 
     @Autowired
+    private RecruitPlayerUseCase recruitPlayerUseCase;
+
+    @Autowired
     private SwapPlayerTitularisationUseCase swapPlayerTitularisationUseCase;
 
     @Test
     void shouldCreateTeam() throws Exception {
         when(createTeamUseCase.execute(any(), any(), any())).thenReturn(7L);
+        when(recruitPlayerUseCase.execute(any(), any(), any(), any(), any(), any(), any()))
+            .thenReturn(15L);
 
+        mockMvc.perform(post("/api/teams")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "name":"PSG",
+                      "acronym":"PSG",
+                      "initialBudget":2000,
+                      "initialPlayer":{
+                        "firstName":"Kylian",
+                        "lastName":"Mbappe",
+                        "acronym":"KM",
+                        "position":"ST",
+                        "performance":9.5,
+                        "marketPrice":200
+                      }
+                    }
+                    """))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.teamId").value(7L))
+            .andExpect(jsonPath("$.playerId").value(15L));
+    }
+
+    @Test
+    void shouldRejectCreateTeamWithoutInitialPlayer() throws Exception {
         mockMvc.perform(post("/api/teams")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
                     {"name":"PSG","acronym":"PSG","initialBudget":2000}
                     """))
-            .andExpect(status().isCreated())
-            .andExpect(jsonPath("$.id").value(7L));
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldRejectCreateTeamWithInvalidInitialPlayerPosition() throws Exception {
+        mockMvc.perform(post("/api/teams")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "name":"PSG",
+                      "acronym":"PSG",
+                      "initialBudget":2000,
+                      "initialPlayer":{
+                        "firstName":"Kylian",
+                        "lastName":"Mbappe",
+                        "acronym":"KM",
+                        "position":"STRING",
+                        "performance":9.5,
+                        "marketPrice":200
+                      }
+                    }
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Position invalide : STRING")));
     }
 
     @Test

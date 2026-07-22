@@ -6,14 +6,13 @@ import jakarta.validation.constraints.NotNull;
 
 import java.math.BigDecimal;
 
-public record RecruitPlayerRequest(
+public record InitialPlayerRequest(
     @NotBlank String firstName,
     @NotBlank String lastName,
     @NotBlank String acronym,
     @NotNull PositionEnum position,
     @NotNull Float performance,
-    @NotNull BigDecimal marketPrice,
-    @NotNull Long teamId
+    @NotNull BigDecimal marketPrice
 ) {
 }
 

@@ -78,7 +78,7 @@ class PlayerControllerUnitTest {
         when(transferPlayerUseCase.execute(any(), any(), any(), any())).thenReturn(mockTransfer);
 
         assertEquals(42L, controller.recruitPlayer(new RecruitPlayerRequest(
-            "A", "B", "AB", "st", 7.5f, BigDecimal.TEN, 1L
+            "A", "B", "AB", PositionEnum.ST, 7.5f, BigDecimal.TEN, 1L
         )).id());
 
         var transferResponse = controller.transferPlayer(new TransferPlayerRequest(42L, 1L, 2L, BigDecimal.ONE));

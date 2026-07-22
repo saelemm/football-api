@@ -168,6 +168,17 @@ class PlayerControllerIntegrationTest {
     }
 
     @Test
+    void shouldRejectInvalidPositionWhenRecruitingPlayer() throws Exception {
+        mockMvc.perform(post("/api/players/recruit")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {"firstName":"A","lastName":"B","acronym":"AB","position":"STRING","performance":7.0,"marketPrice":100,"teamId":1}
+                    """))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("Position invalide : STRING")));
+    }
+
+    @Test
     void shouldMapPlayerNotFound() throws Exception {
         when(getPlayerDetailsUseCase.execute(new PlayerId(404L))).thenThrow(new PlayerNotFoundException("missing"));
 

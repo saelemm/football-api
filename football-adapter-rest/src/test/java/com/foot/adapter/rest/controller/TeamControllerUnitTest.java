@@ -1,7 +1,7 @@
 package com.foot.adapter.rest.controller;
 
 import com.foot.adapter.rest.dto.CreateTeamRequest;
-import com.foot.adapter.rest.dto.IdResponse;
+import com.foot.adapter.rest.dto.InitialPlayerRequest;
 import com.foot.adapter.rest.dto.PlayerSortBy;
 import com.foot.adapter.rest.dto.SortDirection;
 import com.foot.adapter.rest.dto.SwapPlayerTitularisationRequest;
@@ -25,6 +25,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import pagination.PagedResult;
 import usecase.CreateTeamUseCase;
 import usecase.GetTeamDetailsUseCase;
+import usecase.RecruitPlayerUseCase;
 import usecase.SwapPlayerTitularisationUseCase;
 
 import java.math.BigDecimal;
@@ -45,6 +46,9 @@ class TeamControllerUnitTest {
     @Mock
     private GetTeamDetailsUseCase getTeamDetailsUseCase;
 
+    @Mock
+    private RecruitPlayerUseCase recruitPlayerUseCase;
+
 
     @Mock
     private SwapPlayerTitularisationUseCase swapPlayerTitularisationUseCase;
@@ -55,10 +59,19 @@ class TeamControllerUnitTest {
     @Test
     void shouldCreateTeam() {
         when(createTeamUseCase.execute("PSG", "PSG", BigDecimal.valueOf(1000.0))).thenReturn(10L);
+        when(recruitPlayerUseCase.execute("Kylian", "Mbappe", "KM", PositionEnum.ST, 9.5f, BigDecimal.valueOf(200.0), 10L))
+            .thenReturn(77L);
 
-        IdResponse response = controller.createTeam(new CreateTeamRequest("PSG", "PSG", BigDecimal.valueOf(1000.0)));
+        var response = controller.createTeam(new CreateTeamRequest(
+            "PSG",
+            "PSG",
+            BigDecimal.valueOf(1000.0),
+            new InitialPlayerRequest("Kylian", "Mbappe", "KM", PositionEnum.ST, 9.5f, BigDecimal.valueOf(200.0))
+        ));
 
-        assertEquals(10L, response.id());
+        assertEquals(10L, response.teamId());
+        assertEquals(77L, response.playerId());
+        verify(recruitPlayerUseCase).execute("Kylian", "Mbappe", "KM", PositionEnum.ST, 9.5f, BigDecimal.valueOf(200.0), 10L);
     }
 
     @Test

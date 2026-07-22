@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -33,6 +34,14 @@ public class RestExceptionHandler {
             .findFirst()
             .map(err -> err.getField() + " " + err.getDefaultMessage())
             .orElse("Validation error");
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(new ErrorResponse(Instant.now(), 400, "Bad Request", message, request.getRequestURI()));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleUnreadableMessage(HttpMessageNotReadableException ex, HttpServletRequest request) {
+        String message = ex.getMostSpecificCause().getMessage();
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(new ErrorResponse(Instant.now(), 400, "Bad Request", message, request.getRequestURI()));

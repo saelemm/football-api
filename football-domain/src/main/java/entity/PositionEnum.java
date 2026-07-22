@@ -1,5 +1,9 @@
 package entity;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
+import java.util.Arrays;
+
 /**
  * Enum de positions des joueurs
  *
@@ -33,5 +37,21 @@ public enum PositionEnum {
 
     public String position() {
         return position;
+    }
+
+    @JsonCreator
+    public static PositionEnum from(String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException("La position du joueur est obligatoire");
+        }
+
+        return Arrays.stream(values())
+            .filter(positionEnum -> positionEnum.name().equalsIgnoreCase(value.trim())
+                || positionEnum.position.equalsIgnoreCase(value.trim()))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Position invalide : " + value + ". Valeurs autorisées : "
+                    + Arrays.stream(values()).map(PositionEnum::name).reduce((a, b) -> a + ", " + b).orElse("")
+            ));
     }
 }

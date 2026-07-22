@@ -3,7 +3,6 @@ package com.foot.adapter.rest.controller;
 import com.foot.adapter.rest.dto.*;
 import com.foot.adapter.rest.mapper.RestDtoMapper;
 import entity.PlayerId;
-import entity.PositionEnum;
 import entity.TeamId;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -56,7 +55,7 @@ public class PlayerController {
             request.firstName(),
             request.lastName(),
             request.acronym(),
-            PositionEnum.valueOf(request.position().toUpperCase()),
+            request.position(),
             request.performance(),
             request.marketPrice(),
             request.teamId()
